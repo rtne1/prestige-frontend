@@ -20,7 +20,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await api.get("/sanctum/csrf-cookie", { baseURL: process.env.NEXT_PUBLIC_BACKEND_URL });
+      
       
       const response = await api.post("/auth/login", { email, password });
       login(response.data.data.token, response.data.data.user);

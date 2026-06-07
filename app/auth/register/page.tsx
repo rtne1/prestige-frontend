@@ -35,7 +35,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await api.get("/sanctum/csrf-cookie", { baseURL: process.env.NEXT_PUBLIC_BACKEND_URL });
+      
 
       const response = await api.post("/auth/register", formData);
       login(response.data.data.token, response.data.data.user);
