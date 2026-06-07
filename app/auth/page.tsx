@@ -25,9 +25,10 @@ export default function LoginPage() {
       const response = await api.post("/auth/login", { email, password });
       login(response.data.data.token, response.data.data.user);
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Invalid credentials. Authentication failed."
-      );
+      const errorMsg = err.response?.data?.errors 
+        ? Object.values(err.response.data.errors).flat().join(" ")
+        : err.response?.data?.message || "Invalid credentials. Authentication failed.";
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }

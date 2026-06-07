@@ -40,9 +40,10 @@ export default function RegisterPage() {
       const response = await api.post("/auth/register", formData);
       login(response.data.data.token, response.data.data.user);
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Registration failed. Please verify your details."
-      );
+      const errorMsg = err.response?.data?.errors 
+        ? Object.values(err.response.data.errors).flat().join(" ")
+        : err.response?.data?.message || "Registration failed. Please verify your details.";
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
