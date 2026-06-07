@@ -79,7 +79,7 @@ export default function ConfiguratorPage() {
     }
   }, [selectedYear]);
 
-  // --- Handlers ---
+// --- Handlers ---
   const handleDimensionChange = (field: keyof OemSpec, value: string) => {
     setDimensions(prev => ({ ...prev, [field]: parseInt(value) || 0 }));
   };
@@ -89,6 +89,14 @@ export default function ConfiguratorPage() {
     if (step === 2 && (!dimensions.f_width || !dimensions.f_profile || !dimensions.f_rim || !dimensions.r_width || !dimensions.r_profile || !dimensions.r_rim)) return false;
     if (step === 3 && !selectedCompound) return false;
     return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep() && step < 4) setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
   };
 
   const submitConfiguration = async (configData: any) => {
