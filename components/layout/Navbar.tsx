@@ -46,9 +46,15 @@ export function Navbar() {
                 <div className="flex items-center gap-10">
                   <Link
                     href="/garage"
-                    className="text-sm font-medium tracking-widest uppercase text-white border-b border-crimson pb-1"
+                    className="text-sm font-medium tracking-widest uppercase text-white hover:text-crimson transition-colors duration-300"
                   >
                     My Garage
+                  </Link>
+                  <Link
+                    href="/account"
+                    className="text-sm font-medium tracking-widest uppercase text-white hover:text-crimson transition-colors duration-300"
+                  >
+                    Account
                   </Link>
                   <button
                     onClick={logout}
