@@ -34,63 +34,62 @@ export function Navbar() {
       <nav
         className={`fixed top-0 w-full z-[60] transition-all duration-500 ease-luxury ${
           pathname === '/configurator'
-            ? 'bg-transparent py-4 md:py-6 border-none' /* Totally seamless, but CLICKABLE! */
+            ? 'bg-transparent py-4 md:py-6 border-none' 
             : scrolled || menuOpen
             ? 'bg-obsidian/90 backdrop-blur-md py-4 md:py-6 border-b border-glass'
             : 'bg-transparent py-6 md:py-8 border-none'
         }`}
       >
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="font-cinzel text-xl md:text-2xl tracking-[0.2em] font-semibold text-white relative z-[60]">
-              PRESTIGE<span className="text-crimson">.</span>
-            </Link>
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex justify-between items-center w-full">
+          
+          {/* LEFT: Logo */}
+          <Link href="/" className="font-cinzel text-xl md:text-2xl tracking-[0.2em] font-semibold text-white relative z-[60]">
+            PRESTIGE<span className="text-crimson">.</span>
+          </Link>
+
+          {/* RIGHT: Lang Toggle, Links, and Hamburger */}
+          <div className="flex items-center gap-6 md:gap-10 relative z-[60]">
             
-            {/* Language Toggle Button */}
+            {/* Language Toggle Button (Now perfectly aligned) */}
             <button 
               onClick={toggleLanguage} 
-              className="relative z-[60] text-xs font-semibold tracking-widest text-ash hover:text-white transition-colors border border-glass px-3 py-1 rounded-sm"
+              className="text-[10px] md:text-xs font-semibold tracking-widest text-ash hover:text-white transition-colors border border-glass px-3 py-1 rounded-sm"
             >
               {lang === "en" ? "العربية" : "EN"}
             </button>
-          </div>
 
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-10">
-            <Link href="/configurator" className="text-xs font-medium tracking-widest uppercase text-ash hover:text-white transition-colors duration-300">
-              {t("nav.configure")}
-            </Link>
-            <Link href="/contact" className="text-xs font-medium tracking-widest uppercase text-ash hover:text-white transition-colors duration-300">
-              {t("nav.concierge")}
-            </Link>
-            {!isLoading && (
-              <>
-                {user ? (
-                  <div className="flex items-center gap-10">
-                    <Link href="/garage" className="text-xs font-medium tracking-widest uppercase text-white hover:text-crimson transition-colors duration-300">
-                      {t("nav.garage")}
+            {/* Desktop Links */}
+            <div className="hidden md:flex items-center gap-10">
+              <Link href="/configurator" className="text-xs font-medium tracking-widest uppercase text-ash hover:text-white transition-colors duration-300">
+                {t("nav.configure")}
+              </Link>
+              <Link href="/contact" className="text-xs font-medium tracking-widest uppercase text-ash hover:text-white transition-colors duration-300">
+                {t("nav.concierge")}
+              </Link>
+              {!isLoading && (
+                <>
+                  {user ? (
+                    <div className="flex items-center gap-10">
+                      <Link href="/garage" className="text-xs font-medium tracking-widest uppercase text-white hover:text-crimson transition-colors duration-300">{t("nav.garage")}</Link>
+                      <Link href="/account" className="text-xs font-medium tracking-widest uppercase text-white hover:text-crimson transition-colors duration-300">{t("nav.account")}</Link>
+                      <button onClick={logout} className="text-xs font-medium tracking-widest uppercase text-ash hover:text-crimson transition-colors duration-300">{t("nav.sign_out")}</button>
+                    </div>
+                  ) : (
+                    <Link href="/auth" className="text-xs font-medium tracking-widest uppercase text-white border-b border-crimson pb-1">
+                      {t("nav.client_portal")}
                     </Link>
-                    <Link href="/account" className="text-xs font-medium tracking-widest uppercase text-white hover:text-crimson transition-colors duration-300">
-                      {t("nav.account")}
-                    </Link>
-                    <button onClick={logout} className="text-xs font-medium tracking-widest uppercase text-ash hover:text-crimson transition-colors duration-300">
-                      {t("nav.sign_out")}
-                    </button>
-                  </div>
-                ) : (
-                  <Link href="/auth" className="text-xs font-medium tracking-widest uppercase text-white border-b border-crimson pb-1">
-                    {t("nav.client_portal")}
-                  </Link>
-                )}
-              </>
-            )}
-          </div>
+                  )}
+                </>
+              )}
+            </div>
 
-          {/* Mobile Hamburger Toggle */}
-          <button onClick={toggleMenu} className="md:hidden flex flex-col gap-[6px] relative z-[60] p-2 outline-none">
-            <span className={`w-8 h-[1px] bg-white transition-all duration-300 origin-center ${menuOpen ? "translate-y-[3.5px] rotate-45" : ""}`} />
-            <span className={`w-8 h-[1px] bg-white transition-all duration-300 origin-center ${menuOpen ? "-translate-y-[3.5px] -rotate-45" : ""}`} />
-          </button>
+            {/* Mobile Hamburger Toggle */}
+            <button onClick={toggleMenu} className="md:hidden flex flex-col gap-[6px] p-2 outline-none">
+              <span className={`w-7 h-[1px] bg-white transition-all duration-300 origin-center ${menuOpen ? "translate-y-[3.5px] rotate-45" : ""}`} />
+              <span className={`w-7 h-[1px] bg-white transition-all duration-300 origin-center ${menuOpen ? "-translate-y-[3.5px] -rotate-45" : ""}`} />
+            </button>
+            
+          </div>
         </div>
       </nav>
 
