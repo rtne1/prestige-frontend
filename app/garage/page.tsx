@@ -10,7 +10,6 @@ import { RequestCard } from "@/components/ui/RequestCard";
 import { Button } from "@/components/ui/Button";
 import { ChatWidget } from "@/components/ui/ChatWidget";
 
-// ... (keep your existing Vehicle and TireRequest interfaces)
 interface Vehicle { id: number; nickname: string | null; vehicle_year: { year: number; model: { name: string; brand: { name: string; }; }; }; }
 interface TireRequest { id: number; created_at: string; status: string; f_width: number; f_profile: number; f_rim: number; r_width: number; r_profile: number; r_rim: number; client_notes: string | null; user_vehicle: Vehicle; compound: { model_name: string; brand: { name: string; }; }; }
 
@@ -20,12 +19,7 @@ export default function GaragePage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [requests, setRequests] = useState<TireRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // --- NATIVE CHAT STATE ---
   const [chatRequestId, setChatRequestId] = useState<number | null>(null);
-  const [comments, setComments] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     const fetchGarageData = async () => {
@@ -41,32 +35,13 @@ export default function GaragePage() {
     fetchGarageData();
   }, []);
 
-  // --- CHAT LOGIC ---
-  const openChat = async (id: number) => {
-    setChatRequestId(id);
-    document.body.style.overflow = "hidden"; // Lock background
-    try {
-      const res = await api.get(`/garage/requests/${id}/comments`);
-      setComments(res.data.data);
-    } catch (e) { console.error(e); }
-  };
-
-  const closeChat = () => {
-    setChatRequestId(null);
-    document.body.style.overflow = "auto";
-  };
-
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !chatRequestId) return;
-    setIsSending(true);
-    try {
-      const res = await api.post(`/garage/requests/${chatRequestId}/comments`, { comment: newMessage });
-      setComments([...comments, res.data.data]);
-      setNewMessage("");
-    } catch (e) { console.error(e); } finally { setIsSending(false); }
-  };
-
-  if (isLoading) return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 border-2 border-glass border-t-crimson rounded-full animate-spin" /></div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-glass border-t-crimson rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1440px] mx-auto px-6 md:px-12 py-12 md:py-24 relative">
@@ -75,10 +50,11 @@ export default function GaragePage() {
           <h1 className="font-cinzel text-4xl text-white mb-2">{t("nav.garage")}</h1>
           <p className="text-ash tracking-widest uppercase text-sm">Welcome, {user?.full_name}</p>
         </div>
-        <Link href="/configurator"><Button variant="prestige">New Configuration</Button></Link>
+        <Link href="/configurator">
+          <Button variant="prestige">New Configuration</Button>
+        </Link>
       </header>
 
-      {/* Vehicles Section */}
       <section className="mb-20">
         <h2 className="font-cinzel text-2xl text-white mb-8 border-b border-white/5 pb-4">My Vehicles</h2>
         {vehicles.length === 0 ? (
@@ -86,13 +62,14 @@ export default function GaragePage() {
         ) : (
           <div className="flex overflow-x-auto gap-6 pb-4 snap-x hide-scrollbar">
             {vehicles.map((v) => (
-              <div key={v.id} className="snap-start"><VehicleCard year={v.vehicle_year.year} brand={v.vehicle_year.model.brand.name} model={v.vehicle_year.model.name} nickname={v.nickname} /></div>
+              <div key={v.id} className="snap-start">
+                <VehicleCard year={v.vehicle_year.year} brand={v.vehicle_year.model.brand.name} model={v.vehicle_year.model.name} nickname={v.nickname} />
+              </div>
             ))}
           </div>
         )}
       </section>
 
-      {/* Configurations Section */}
       <section>
         <h2 className="font-cinzel text-2xl text-white mb-8 border-b border-white/5 pb-4">Active Configurations</h2>
         {requests.length === 0 ? (
@@ -102,8 +79,7 @@ export default function GaragePage() {
             {requests.map((r) => (
               <div key={r.id} className="relative">
                 <RequestCard date={r.created_at} status={r.status} vehicle={`${r.user_vehicle.vehicle_year.year} ${r.user_vehicle.vehicle_year.model.brand.name} ${r.user_vehicle.vehicle_year.model.name}`} compoundBrand={r.compound.brand.name} compoundModel={r.compound.model_name} frontSpec={`${r.f_width}/${r.f_profile} R${r.f_rim}`} rearSpec={`${r.r_width}/${r.r_profile} R${r.r_rim}`} />
-                {/* NATIVE CHAT BUTTON */}
-                <button onClick={() => openChat(r.id)} className="w-full mt-2 bg-white/5 border border-white/10 hover:bg-white/10 text-ash hover:text-white transition-all py-3 text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+                <button onClick={() => setChatRequestId(r.id)} className="w-full mt-2 bg-white/5 border border-white/10 hover:bg-white/10 text-ash hover:text-white transition-all py-3 text-xs uppercase tracking-widest flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                   Concierge Thread
                 </button>
@@ -113,6 +89,8 @@ export default function GaragePage() {
         )}
       </section>
 
+      {/* Floating Chat Widget */}
       <ChatWidget requestId={chatRequestId} onClose={() => setChatRequestId(null)} />
+    </div>
   );
 }
