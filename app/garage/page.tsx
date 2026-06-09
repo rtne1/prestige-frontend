@@ -8,6 +8,7 @@ import api from "@/lib/api";
 import { VehicleCard } from "@/components/ui/VehicleCard";
 import { RequestCard } from "@/components/ui/RequestCard";
 import { Button } from "@/components/ui/Button";
+import { ChatWidget } from "@/components/ui/ChatWidget";
 
 // ... (keep your existing Vehicle and TireRequest interfaces)
 interface Vehicle { id: number; nickname: string | null; vehicle_year: { year: number; model: { name: string; brand: { name: string; }; }; }; }
@@ -112,48 +113,6 @@ export default function GaragePage() {
         )}
       </section>
 
-      {/* --- SECURE CONCIERGE CHAT PANEL (SLIDE-OVER) --- */}
-      {chatRequestId && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
-          <div className="absolute inset-0 bg-obsidian/80 backdrop-blur-sm" onClick={closeChat} />
-          
-          <div className="w-full md:w-[450px] bg-carbon border-l border-white/10 h-full flex flex-col relative z-10 animate-[slideLeft_0.3s_ease-out]">
-            {/* Chat Header */}
-            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-obsidian/50">
-              <div>
-                <h3 className="font-cinzel text-xl text-white">Concierge Thread</h3>
-                <p className="text-[10px] text-ash tracking-widest uppercase mt-1">Order Ref: #{chatRequestId}</p>
-              </div>
-              <button onClick={closeChat} className="text-ash hover:text-white"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/[0.02] to-transparent">
-              {comments.map((msg, idx) => {
-                const isAdmin = msg.user.role === 'admin';
-                return (
-                  <div key={idx} className={`flex flex-col ${isAdmin ? 'items-start' : 'items-end'}`}>
-                    <span className="text-[9px] uppercase tracking-widest text-ash mb-1">{isAdmin ? 'VIP Concierge' : 'You'}</span>
-                    <div className={`p-4 max-w-[85%] text-sm font-light leading-relaxed ${isAdmin ? 'bg-white/5 border border-white/10 text-white rounded-tr-xl rounded-br-xl rounded-bl-xl' : 'bg-crimson/20 border border-crimson/30 text-white rounded-tl-xl rounded-bl-xl rounded-br-xl'}`}>
-                      {msg.comment}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Chat Input */}
-            <div className="p-6 border-t border-white/10 bg-obsidian/50">
-              <div className="relative">
-                <textarea value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type your message..." className="w-full bg-carbon border border-white/10 p-4 pr-16 text-sm outline-none focus:border-crimson transition-colors resize-none h-[80px]" />
-                <button onClick={sendMessage} disabled={isSending || !newMessage.trim()} className="absolute bottom-4 right-4 text-crimson disabled:opacity-30 hover:text-white transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <ChatWidget requestId={chatRequestId} onClose={() => setChatRequestId(null)} />
   );
 }
