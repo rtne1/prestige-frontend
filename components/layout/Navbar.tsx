@@ -33,11 +33,11 @@ export function Navbar() {
     <>
       <nav
         className={`fixed top-0 w-full z-[60] transition-all duration-500 ease-luxury ${
-          pathname === '/configurator' 
-            ? 'bg-transparent py-6 md:py-8 border-none pointer-events-none' /* Totally invisible on Configurator */
+          pathname === '/configurator'
+            ? 'bg-transparent py-4 md:py-6 border-none' /* Totally seamless, but CLICKABLE! */
             : scrolled || menuOpen
-              ? 'bg-obsidian/90 backdrop-blur-md py-4 md:py-6 border-b border-glass'
-              : 'bg-transparent py-6 md:py-8 border-none'
+            ? 'bg-obsidian/90 backdrop-blur-md py-4 md:py-6 border-b border-glass'
+            : 'bg-transparent py-6 md:py-8 border-none'
         }`}
       >
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex justify-between items-center">
