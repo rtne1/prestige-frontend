@@ -6,7 +6,6 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CustomCursor } from "@/components/ui/CustomCursor";
-import { LiveChat } from "@/components/LiveChat";
 
 export const metadata: Metadata = {
   title: "Prestige Auto Care | Elite Performance",
@@ -25,7 +24,6 @@ export default function RootLayout({
         
         {/* The Language Provider MUST wrap the LiveChat so it can read the Arabic translation! */}
         <LanguageProvider>
-          <LiveChat />
           <AuthProvider>
             <Navbar />
             <main className="flex-grow">{children}</main>
