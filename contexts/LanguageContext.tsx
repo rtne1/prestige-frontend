@@ -2,8 +2,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/api";
+import en from "@/locales/en.json";
+import ar from "@/locales/ar.json";
 
 type Language = "en" | "ar";
+const localDictionaries: Record<Language, any> = { en, ar };
 
 interface LanguageContextType {
   lang: Language;
@@ -15,22 +18,21 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Language>("en");
-  const [dict, setDict] = useState<Record<string, {en: string, ar: string}>>({});
+  const [dbDict, setDbDict] = useState<Record<string, {en: string, ar: string}>>({});
 
   useEffect(() => {
     const saved = localStorage.getItem("prestige_lang") as Language;
     if (saved) setLang(saved);
     
-    // Fetch live translations from your new CMS
+    // Fetch overrides from the dashboard
     api.get("/translations").then(res => {
       const formatted: any = {};
       res.data.data.forEach((item: any) => { formatted[item.key] = { en: item.en, ar: item.ar }; });
-      setDict(formatted);
+      setDbDict(formatted);
     }).catch(console.error);
   }, []);
 
   useEffect(() => {
-    // True RTL Flipping
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = lang;
     
@@ -49,9 +51,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("prestige_lang", newLang);
   };
 
-  const t = (key: string) => {
-    if (dict[key]) return dict[key][lang];
-    return key; // Fallback
+  const t = (path: string) => {
+    // 1. Check if you customized it in the Dashboard
+    if (dbDict[path] && dbDict[path][lang]) {
+      return dbDict[path][lang];
+    }
+
+    // 2. Otherwise, automatically pull from the local JSON files
+    const keys = path.split(".");
+    let value: any = localDictionaries[lang];
+    for (const key of keys) {
+      if (value && value[key]) {
+        value = value[key];
+      } else {
+        return path; // Fallback so it never breaks
+      }
+    }
+    return value;
   };
 
   return (

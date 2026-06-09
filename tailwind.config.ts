@@ -27,6 +27,17 @@ const config: Config = {
       transitionTimingFunction: {
         luxury: "cubic-bezier(0.16, 1, 0.3, 1)",
       },
+      // ADDED THE MISSING ANIMATIONS HERE:
+      keyframes: {
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(40px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slowZoom: {
+          '0%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(1.1)' },
+        }
+      }
     },
   },
   plugins: [],
