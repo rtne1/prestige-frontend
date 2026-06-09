@@ -1,7 +1,12 @@
+"use client";
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname === '/configurator') return null; // HIDDEN ON CONFIGURATOR
+
   return (
     <footer className="border-t border-glass py-12 bg-obsidian z-10 relative">
       <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex flex-col md:flex-row justify-between items-center gap-6">
