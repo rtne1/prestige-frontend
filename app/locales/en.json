@@ -1,0 +1,19 @@
+{
+  "nav": {
+    "configure": "Configure",
+    "concierge": "Concierge",
+    "garage": "Garage",
+    "account": "Account",
+    "sign_out": "Sign Out",
+    "client_portal": "Client Portal"
+  },
+  "home": {
+    "title_1": "PRECISION",
+    "title_2": "ENGINEERED.",
+    "subtitle": "The ultimate homologation studio for the world's most demanding exotic vehicles. Authorize your specifications with our VIP Concierge.",
+    "enter_studio": "Enter The Studio",
+    "scroll": "Scroll",
+    "select_marque": "Select Marque",
+    "choose_mfg": "Choose your manufacturer to configure homologated compounds."
+  }
+}

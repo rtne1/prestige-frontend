@@ -4,14 +4,15 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, isLoading, logout } = useAuth();
+  const { t, lang, toggleLanguage } = useLanguage();
   const pathname = usePathname();
 
-  // Close menu on route change
   useEffect(() => {
     setMenuOpen(false);
     document.body.style.overflow = "auto";
@@ -38,35 +39,45 @@ export function Navbar() {
         }`}
       >
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex justify-between items-center">
-          <Link href="/" className="font-cinzel text-xl md:text-2xl tracking-[0.2em] font-semibold text-white relative z-[60]">
-            PRESTIGE<span className="text-crimson">.</span>
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/" className="font-cinzel text-xl md:text-2xl tracking-[0.2em] font-semibold text-white relative z-[60]">
+              PRESTIGE<span className="text-crimson">.</span>
+            </Link>
+            
+            {/* Language Toggle Button */}
+            <button 
+              onClick={toggleLanguage} 
+              className="relative z-[60] text-xs font-semibold tracking-widest text-ash hover:text-white transition-colors border border-glass px-3 py-1 rounded-sm"
+            >
+              {lang === "en" ? "العربية" : "EN"}
+            </button>
+          </div>
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-10">
             <Link href="/configurator" className="text-xs font-medium tracking-widest uppercase text-ash hover:text-white transition-colors duration-300">
-              Configure
+              {t("nav.configure")}
             </Link>
             <Link href="/contact" className="text-xs font-medium tracking-widest uppercase text-ash hover:text-white transition-colors duration-300">
-              Concierge
+              {t("nav.concierge")}
             </Link>
             {!isLoading && (
               <>
                 {user ? (
                   <div className="flex items-center gap-10">
                     <Link href="/garage" className="text-xs font-medium tracking-widest uppercase text-white hover:text-crimson transition-colors duration-300">
-                      Garage
+                      {t("nav.garage")}
                     </Link>
                     <Link href="/account" className="text-xs font-medium tracking-widest uppercase text-white hover:text-crimson transition-colors duration-300">
-                      Account
+                      {t("nav.account")}
                     </Link>
                     <button onClick={logout} className="text-xs font-medium tracking-widest uppercase text-ash hover:text-crimson transition-colors duration-300">
-                      Sign Out
+                      {t("nav.sign_out")}
                     </button>
                   </div>
                 ) : (
                   <Link href="/auth" className="text-xs font-medium tracking-widest uppercase text-white border-b border-crimson pb-1">
-                    Client Portal
+                    {t("nav.client_portal")}
                   </Link>
                 )}
               </>
@@ -84,20 +95,20 @@ export function Navbar() {
       {/* Mobile Full-Screen Overlay */}
       <div className={`fixed inset-0 bg-obsidian/95 backdrop-blur-xl z-50 flex flex-col items-center justify-center transition-all duration-500 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
         <div className="flex flex-col items-center gap-10 w-full px-6">
-          <Link href="/configurator" className={`font-cinzel text-4xl text-white tracking-widest text-center transition-all duration-500 delay-100 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>Configure</Link>
-          <Link href="/contact" className={`font-cinzel text-4xl text-white tracking-widest text-center transition-all duration-500 delay-150 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>Concierge</Link>
+          <Link href="/configurator" className={`font-cinzel text-4xl text-white tracking-widest text-center transition-all duration-500 delay-100 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>{t("nav.configure")}</Link>
+          <Link href="/contact" className={`font-cinzel text-4xl text-white tracking-widest text-center transition-all duration-500 delay-150 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>{t("nav.concierge")}</Link>
           
           <div className={`w-full max-w-[200px] h-[1px] bg-glass my-2 transition-all duration-500 delay-200 ${menuOpen ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"}`} />
           
           {!isLoading && user ? (
             <>
-              <Link href="/garage" className={`font-cinzel text-3xl text-crimson tracking-widest text-center transition-all duration-500 delay-200 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>My Garage</Link>
-              <Link href="/account" className={`font-cinzel text-3xl text-white tracking-widest text-center transition-all duration-500 delay-250 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>Account</Link>
-              <button onClick={logout} className={`text-xs uppercase tracking-widest text-ash mt-4 transition-all duration-500 delay-300 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>Sign Out</button>
+              <Link href="/garage" className={`font-cinzel text-3xl text-crimson tracking-widest text-center transition-all duration-500 delay-200 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>{t("nav.garage")}</Link>
+              <Link href="/account" className={`font-cinzel text-3xl text-white tracking-widest text-center transition-all duration-500 delay-250 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>{t("nav.account")}</Link>
+              <button onClick={logout} className={`text-xs uppercase tracking-widest text-ash mt-4 transition-all duration-500 delay-300 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>{t("nav.sign_out")}</button>
             </>
           ) : (
             <Link href="/auth" className={`w-full max-w-sm bg-white text-obsidian py-5 uppercase tracking-[0.2em] text-sm font-semibold text-center transition-all duration-500 delay-300 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
-              Sign In
+              {t("nav.client_portal")}
             </Link>
           )}
         </div>
