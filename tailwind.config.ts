@@ -22,7 +22,7 @@ const config: Config = {
       fontFamily: {
         cinzel: ["var(--font-cinzel)", "serif"],
         inter: ["var(--font-inter)", "sans-serif"],
-        cairo: ["var(--font-cairo)", "sans-serif"], // <--- Added Cairo
+        janna: ["'Bahij Janna'", "sans-serif"],
       },
       transitionTimingFunction: {
         luxury: "cubic-bezier(0.16, 1, 0.3, 1)",

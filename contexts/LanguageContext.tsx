@@ -1,11 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import en from "@/locales/en.json";
-import ar from "@/locales/ar.json";
+import api from "@/lib/api";
 
 type Language = "en" | "ar";
-const dictionaries = { en, ar };
 
 interface LanguageContextType {
   lang: Language;
@@ -17,22 +15,31 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Language>("en");
+  const [dict, setDict] = useState<Record<string, {en: string, ar: string}>>({});
 
   useEffect(() => {
     const saved = localStorage.getItem("prestige_lang") as Language;
     if (saved) setLang(saved);
+    
+    // Fetch live translations from your new CMS
+    api.get("/translations").then(res => {
+      const formatted: any = {};
+      res.data.data.forEach((item: any) => { formatted[item.key] = { en: item.en, ar: item.ar }; });
+      setDict(formatted);
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {
+    // True RTL Flipping
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = lang;
     
     if (lang === "ar") {
-      document.body.classList.add("font-cairo");
+      document.body.classList.add("font-janna");
       document.body.classList.remove("font-inter");
     } else {
       document.body.classList.add("font-inter");
-      document.body.classList.remove("font-cairo");
+      document.body.classList.remove("font-janna");
     }
   }, [lang]);
 
@@ -42,14 +49,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("prestige_lang", newLang);
   };
 
-  const t = (path: string) => {
-    const keys = path.split(".");
-    let value: any = dictionaries[lang];
-    for (const key of keys) {
-      if (value && value[key]) value = value[key];
-      else return path; 
-    }
-    return value;
+  const t = (key: string) => {
+    if (dict[key]) return dict[key][lang];
+    return key; // Fallback
   };
 
   return (
