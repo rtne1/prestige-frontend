@@ -69,4 +69,26 @@
     "email_btn": "Compose Email",
     "hours": "Operating Hours: Monday – Saturday, 09:00 – 19:00 (KSA Time)"
   }
+  "auth": {
+    "title": "Authenticate",
+    "subtitle": "Enter Your Client Portal",
+    "email_label": "Email Address",
+    "pass_label": "Password",
+    "login_btn": "Login Securely",
+    "no_account": "Not part of the registry?",
+    "create_profile": "Create Profile"
+  },
+  "register": {
+    "title": "Create Profile",
+    "subtitle": "Join The Exclusive Registry",
+    "name_label": "Full Name",
+    "email_label": "Email Address",
+    "phone_label": "Phone Number",
+    "pass_label": "Create Password",
+    "confirm_pass_label": "Confirm Password",
+    "register_btn": "Register Profile",
+    "has_account": "Already a member?",
+    "login_link": "Authenticate",
+    "pass_mismatch": "Passwords do not match."
+  }
 }
