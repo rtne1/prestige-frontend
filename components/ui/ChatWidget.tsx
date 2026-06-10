@@ -121,23 +121,24 @@ export function ChatWidget() {
 
         <div className="h-[400px] flex flex-col bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/[0.02] to-transparent relative">
           
+          {/* STEP 1: Topic & Guest Logic */}
           {step === "topic" && (
-            <div className="p-6 flex flex-col h-full text-start">
+            <div className="p-6 flex flex-col h-full text-start overflow-y-auto">
               <p className="text-sm font-light text-white mb-6 leading-relaxed">{t("chat.welcome")}</p>
               
               {!user && (
-                <div className="bg-obsidian/50 p-4 rounded-xl border border-white/5 mb-6 text-center">
+                <div className="bg-obsidian/50 p-4 rounded-xl border border-white/5 mb-6 text-center shrink-0">
                   <p className="text-xs text-ash mb-3">{t("chat.auth_prompt")}</p>
-                  <Link href="/auth" onClick={() => setIsOpen(false)} className="block w-full bg-white text-carbon py-2 text-xs uppercase tracking-widest font-semibold rounded-md hover:bg-crimson hover:text-white transition-colors">{t("chat.sign_in")}</Link>
-                  <div className="flex items-center gap-4 my-3"><div className="flex-1 border-t border-white/10"></div><span className="text-[10px] text-ash uppercase">{t("chat.or")}</span><div className="flex-1 border-t border-white/10"></div></div>
-                  <p className="text-xs text-white">{t("chat.guest_prompt")}</p>
+                  <Link href="/auth" onClick={() => setIsOpen(false)} className="block w-full bg-white text-carbon py-3 text-xs uppercase tracking-widest font-semibold rounded-md hover:bg-crimson hover:text-white transition-colors">{t("chat.sign_in")}</Link>
+                  <div className="flex items-center gap-4 my-4"><div className="flex-1 border-t border-white/10"></div><span className="text-[10px] text-ash uppercase">{t("chat.or")}</span><div className="flex-1 border-t border-white/10"></div></div>
+                  <span className="text-[10px] uppercase tracking-widest text-crimson font-semibold">{t("chat.guest_prompt")}</span>
                 </div>
               )}
 
-              <div className="space-y-2 mt-auto">
-                <button onClick={() => startSession(t("chat.sales"))} className="w-full text-start p-3 text-sm text-ash hover:text-white border border-white/10 rounded-lg hover:border-crimson hover:bg-crimson/10 transition-colors">{t("chat.sales")}</button>
-                <button onClick={() => startSession(t("chat.support"))} className="w-full text-start p-3 text-sm text-ash hover:text-white border border-white/10 rounded-lg hover:border-crimson hover:bg-crimson/10 transition-colors">{t("chat.support")}</button>
-                <button onClick={() => startSession(t("chat.order"))} className="w-full text-start p-3 text-sm text-ash hover:text-white border border-white/10 rounded-lg hover:border-crimson hover:bg-crimson/10 transition-colors">{t("chat.order")}</button>
+              <div className="space-y-3 mt-2 pb-4 relative z-10">
+                <button onClick={() => startSession(t("chat.sales"))} className="w-full text-start p-4 text-sm text-ash hover:text-white border border-white/10 rounded-xl hover:border-crimson hover:bg-crimson/10 transition-colors shadow-sm">{t("chat.sales")}</button>
+                <button onClick={() => startSession(t("chat.support"))} className="w-full text-start p-4 text-sm text-ash hover:text-white border border-white/10 rounded-xl hover:border-crimson hover:bg-crimson/10 transition-colors shadow-sm">{t("chat.support")}</button>
+                <button onClick={() => startSession(t("chat.order"))} className="w-full text-start p-4 text-sm text-ash hover:text-white border border-white/10 rounded-xl hover:border-crimson hover:bg-crimson/10 transition-colors shadow-sm">{t("chat.order")}</button>
               </div>
             </div>
           )}

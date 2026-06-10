@@ -66,10 +66,10 @@ export default function Home() {
 
       {/* EDITORIAL MARQUE GRID */}
       <section id="studio" className="py-24 md:py-40 px-6 md:px-12 max-w-[1600px] mx-auto w-full relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 md:mb-20 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-luxury">
-          <div>
+        <div className="flex flex-col justify-start items-start mb-12 md:mb-20 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-luxury text-start w-full">
+          <div className="w-full text-start">
             <h2 className={`font-cinzel text-3xl md:text-5xl mb-4 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("home.select_marque")}</h2>
-            <p className="text-ash font-light text-sm md:text-base tracking-wide">{t("home.choose_mfg")}</p>
+            <p className={`text-ash font-light text-sm md:text-base tracking-wide ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("home.choose_mfg")}</p>
           </div>
         </div>
 
