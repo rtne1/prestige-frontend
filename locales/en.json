@@ -68,7 +68,7 @@
     "email_desc": "For formal requests",
     "email_btn": "Compose Email",
     "hours": "Operating Hours: Monday – Saturday, 09:00 – 19:00 (KSA Time)"
-  }
+  },
   "auth": {
     "title": "Authenticate",
     "subtitle": "Enter Your Client Portal",
