@@ -21,15 +21,21 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${cinzel.variable} ${inter.variable} ${cairo.variable}`}>
       <body className="bg-obsidian text-white min-h-screen flex flex-col cursor-none transition-all duration-300">
-        <CustomCursor />
-        <ChatWidget />
         
-        {/* The Language Provider MUST wrap the LiveChat so it can read the Arabic translation! */}
+        {/* Layer 1: Language Engine */}
         <LanguageProvider>
+          {/* Layer 2: Authentication Engine */}
           <AuthProvider>
+            
+            {/* All UI Components must sit INSIDE the engines so they can read the data! */}
+            <CustomCursor />
             <Navbar />
+            
             <main className="flex-grow">{children}</main>
+            
             <Footer />
+            <ChatWidget />
+
           </AuthProvider>
         </LanguageProvider>
 
