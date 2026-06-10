@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CustomCursor } from "@/components/ui/CustomCursor";
+import { ChatWidget } from "@/components/ui/ChatWidget";
 
 export const metadata: Metadata = {
   title: "Prestige Auto Care | Elite Performance",
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="en" className={`${cinzel.variable} ${inter.variable} ${cairo.variable}`}>
       <body className="bg-obsidian text-white min-h-screen flex flex-col cursor-none transition-all duration-300">
         <CustomCursor />
+        <ChatWidget />
         
         {/* The Language Provider MUST wrap the LiveChat so it can read the Arabic translation! */}
         <LanguageProvider>
