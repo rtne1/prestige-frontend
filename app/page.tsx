@@ -98,7 +98,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent"></div>
                   
                   {/* Editorial Text pinned to the bottom corner */}
-                  <div className={`absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'right-6 md:right-8' : 'left-6 md:left-8'} z-10`}>
+                  <div className="absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'left-0 w-full text-center z-10 px-4">
                     <span className={`font-cinzel text-2xl md:text-3xl tracking-[0.2em] text-white group-hover:text-crimson transition-colors duration-500 ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
                       {brand.name.toUpperCase()}
                     </span>
