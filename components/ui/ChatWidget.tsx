@@ -80,12 +80,21 @@ export function ChatWidget() {
   };
 
   return (
-    // Uses "end-6" which maps to right in LTR, and left in RTL automatically!
-    <div className={`fixed bottom-6 end-6 z-[100] flex flex-col items-end`}>
+    <div className={`fixed bottom-6 z-[100] flex flex-col items-end transition-all duration-500 ease-luxury ${lang === 'ar' ? 'left-0' : 'right-0'}`}>
       
-      {/* Floating Toggle Button (Hidden on Contact Page) */}
+      {/* PEeking Floating Toggle Button */}
       {!isContactPage && (
-        <button onClick={() => setIsOpen(!isOpen)} className="w-14 h-14 rounded-full bg-crimson text-white shadow-[0_10px_30px_rgba(204,0,0,0.4)] flex items-center justify-center hover:scale-105 transition-transform">
+        <button 
+          onClick={() => setIsOpen(!isOpen)} 
+          className={`w-14 h-14 rounded-full bg-crimson text-white shadow-[0_10px_30px_rgba(204,0,0,0.4)] flex items-center justify-center transition-all duration-500
+            ${isOpen 
+              ? (lang === 'ar' ? 'translate-x-6 mx-6 opacity-100' : '-translate-x-6 mx-6 opacity-100') 
+              : (lang === 'ar' 
+                  ? '-translate-x-7 opacity-40 hover:-translate-x-4 hover:opacity-100' 
+                  : 'translate-x-7 opacity-40 hover:translate-x-4 hover:opacity-100')
+            }
+          `}
+        >
           {isOpen ? (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           ) : (
@@ -95,7 +104,7 @@ export function ChatWidget() {
       )}
 
       {/* Chat Window */}
-      <div className={`absolute bottom-20 end-0 origin-bottom w-[350px] max-w-[calc(100vw-48px)] bg-carbon border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden transition-all duration-300 ${isOpen ? "scale-100 opacity-100 pointer-events-auto" : "scale-90 opacity-0 pointer-events-none"}`}>
+      <div className={`absolute bottom-20 ${lang === 'ar' ? 'left-6 origin-bottom-left' : 'right-6 origin-bottom-right'} w-[350px] max-w-[calc(100vw-48px)] bg-carbon border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden transition-all duration-300 ${isOpen ? "scale-100 opacity-100 pointer-events-auto" : "scale-90 opacity-0 pointer-events-none"}`}>
         
         <div className="bg-obsidian border-b border-white/10 p-4 flex justify-between items-center">
           <div className="flex items-center gap-3">

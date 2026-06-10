@@ -34,7 +34,9 @@
     "rear_axle": "Rear",
     "special_notes": "Additional Notes",
     "review": "Specification Review",
-    "oem_fitment": "Recommended Sizes"
+    "oem_fitment": "Recommended Sizes",
+    "vehicle": "Vehicle",
+    "compound": "Compound"
   },
   "chat": {
     "title": "Customer Service",

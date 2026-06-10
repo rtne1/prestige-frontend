@@ -171,10 +171,18 @@ export default function ConfiguratorPage() {
 
               {selectedBrand !== "" && (
                 <div className="animate-[fadeInUp_0.4s_forwards]">
-                  <h3 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo font-semibold' : ''}`}>{t("configurator.select_model")}</h3>
+                  <h3 className={`text-[10px] uppercase tracking-widest text-ash mb-4 text-center md:text-start ${lang === 'ar' ? 'font-cairo font-semibold' : ''}`}>{t("configurator.select_model")}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {models.map(m => (
-                      <button key={m.id} onClick={() => setSelectedModel(m.id)} className={`relative py-5 px-6 text-start transition-all duration-500 font-inter font-light text-sm ${selectedModel === m.id ? 'border-crimson bg-gradient-to-r from-crimson/10 to-transparent text-white border' : 'border-white/10 bg-carbon/30 text-ash hover:border-white/30 hover:text-white border'}`}>
+                      <button 
+                        key={m.id} 
+                        onClick={() => setSelectedModel(m.id)}
+                        // THE FIX: Changed text-start to text-center
+                        className={`relative py-5 px-6 text-center transition-all duration-500 font-inter font-light text-sm
+                          ${selectedModel === m.id 
+                            ? 'border-crimson bg-gradient-to-r from-crimson/10 to-transparent text-white border' 
+                            : 'border-white/10 bg-carbon/30 text-ash hover:border-white/30 hover:text-white border'}`}
+                      >
                         {m.name}
                       </button>
                     ))}
@@ -252,14 +260,15 @@ export default function ConfiguratorPage() {
             <div className="animate-[fadeInUp_0.6s_forwards] max-w-3xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {compounds.map(compound => (
-                  <div key={compound.id} onClick={() => setSelectedCompound(compound.id)} className={`bg-carbon/50 border p-6 md:p-8 cursor-pointer transition-all duration-300 relative group ${selectedCompound === compound.id ? "border-crimson shadow-[0_0_30px_rgba(204,0,0,0.15)] bg-gradient-to-b from-crimson/10 to-transparent" : "border-white/10 hover:border-white/30 hover:bg-carbon"}`}>
+                  // THE FIX: Added text-center, flex flex-col items-center
+                  <div key={compound.id} onClick={() => setSelectedCompound(compound.id)} className={`bg-carbon/50 border p-6 md:p-8 cursor-pointer transition-all duration-300 relative group flex flex-col items-center text-center ${selectedCompound === compound.id ? "border-crimson shadow-[0_0_30px_rgba(204,0,0,0.15)] bg-gradient-to-b from-crimson/10 to-transparent" : "border-white/10 hover:border-white/30 hover:bg-carbon"}`}>
                     <div className={`absolute top-6 ${lang === 'ar' ? 'left-6' : 'right-6'} transition-opacity duration-300 ${selectedCompound === compound.id ? 'opacity-100 text-crimson' : 'opacity-0'}`}>
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                     </div>
                     <span className="text-[10px] text-ash uppercase tracking-widest block mb-2">{compound.brand.name}</span>
                     <h3 className="font-cinzel text-xl md:text-2xl text-white mb-6">{compound.model_name}</h3>
                     {compound.specs && (
-                      <div className="flex flex-wrap gap-2 mt-auto pt-6 border-t border-white/10">
+                      <div className="flex flex-wrap justify-center gap-2 mt-auto pt-6 border-t border-white/10 w-full">
                         {Object.entries(compound.specs).map(([key, val]) => (
                           <span key={key} className="text-[9px] text-ash bg-obsidian border border-white/10 px-2 py-1 uppercase tracking-widest rounded-sm">{key}: {val as React.ReactNode}</span>
                         ))}
@@ -278,7 +287,7 @@ export default function ConfiguratorPage() {
                 <h3 className={`font-cinzel text-2xl mb-8 border-b border-white/10 pb-6 ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{t("configurator.review")}</h3>
                 <div className="space-y-6 md:space-y-8">
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-                    <span className="text-[10px] text-ash uppercase tracking-widest">Vehicle</span>
+                    <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.vehicle")}</span>
                     <span className="font-medium text-lg md:text-base text-white">{yearObj?.year} {brandObj?.name} {modelObj?.name}</span>
                   </div>
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
@@ -290,7 +299,7 @@ export default function ConfiguratorPage() {
                     <span className="font-light text-lg md:text-base text-white">{dimensions.r_width}/{dimensions.r_profile} R{dimensions.r_rim}</span>
                   </div>
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
-                    <span className="text-[10px] text-ash uppercase tracking-widest">Compound</span>
+                    <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.compound")}</span>
                     <span className="font-medium text-crimson text-lg md:text-base">{compoundObj?.brand.name} {compoundObj?.model_name}</span>
                   </div>
                 </div>
@@ -311,18 +320,18 @@ export default function ConfiguratorPage() {
           )}
         </div>
 
-        {/* LOCKED BOTTOM ACTION BAR */}
-        <div className="absolute bottom-0 left-0 w-full bg-obsidian/80 backdrop-blur-2xl border-t border-white/10 p-6 lg:p-8 flex lg:flex-row flex-col-reverse justify-between items-center gap-4 z-50">
-          <button onClick={handleBack} className={`w-full lg:w-auto text-xs uppercase tracking-widest text-ash hover:text-white py-3 transition-colors ${step === 1 ? "invisible" : ""}`} disabled={isSubmitting}>
+        {/* LOCKED BOTTOM ACTION BAR (Side-by-side on Mobile) */}
+        <div className="absolute bottom-0 left-0 w-full bg-obsidian/90 backdrop-blur-2xl border-t border-white/10 p-4 lg:p-8 flex flex-row justify-between items-center gap-4 z-50">
+          <button onClick={handleBack} className={`w-1/3 lg:w-auto text-[10px] md:text-xs uppercase tracking-widest text-ash hover:text-white py-4 transition-colors ${step === 1 ? "invisible" : ""}`} disabled={isSubmitting}>
             {t("configurator.back")}
           </button>
           
           {step < 4 ? (
-            <button onClick={handleNext} disabled={!validateStep()} className={`w-full lg:w-auto bg-white text-obsidian px-10 py-4 uppercase tracking-[0.2em] text-xs font-semibold hover:bg-crimson hover:text-white transition-all disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-obsidian ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
+            <button onClick={handleNext} disabled={!validateStep()} className={`w-2/3 lg:w-auto bg-white text-obsidian px-6 py-4 uppercase tracking-[0.2em] text-[10px] md:text-xs font-semibold hover:bg-crimson hover:text-white transition-all disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-obsidian text-center ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
               {t("configurator.continue")}
             </button>
           ) : (
-            <button onClick={handleAuthorize} className={`w-full lg:w-auto bg-crimson text-white px-10 py-4 uppercase tracking-[0.2em] text-xs font-semibold hover:bg-white hover:text-obsidian transition-all shadow-[0_0_30px_rgba(204,0,0,0.3)] ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
+            <button onClick={handleAuthorize} className={`w-2/3 lg:w-auto bg-crimson text-white px-6 py-4 uppercase tracking-[0.2em] text-[10px] md:text-xs font-semibold hover:bg-white hover:text-obsidian transition-all shadow-[0_0_30px_rgba(204,0,0,0.3)] text-center ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
               {user ? t("configurator.auth_req") : t("configurator.auth_to_auth")}
             </button>
           )}
