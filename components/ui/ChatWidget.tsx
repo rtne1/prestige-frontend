@@ -20,6 +20,13 @@ export function ChatWidget() {
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Listen for other buttons wanting to open the chat!
+  useEffect(() => {
+    const handleOpenChat = () => setIsOpen(true);
+    window.addEventListener("open-chat", handleOpenChat);
+    return () => window.removeEventListener("open-chat", handleOpenChat);
+  }, []);
+
   // Initialize Guest ID and check for existing session
   useEffect(() => {
     let savedGuestId = localStorage.getItem("prestige_guest_id");
