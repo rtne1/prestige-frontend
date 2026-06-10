@@ -33,6 +33,38 @@
     "front_axle": "Front Axle",
     "rear_axle": "Rear Axle",
     "special_notes": "Special Instructions / Concierge Notes",
-    "review": "Specification Review"
+    "review": "Specification Review",
+    "oem_fitment": "OEM Recommended Fitment"
+  },
+  "chat": {
+    "title": "Prestige Concierge",
+    "subtitle": "We reply immediately",
+    "welcome": "Welcome to Prestige. How may our concierge team assist you today?",
+    "auth_prompt": "For personalized service, please authenticate.",
+    "sign_in": "Sign In / Register",
+    "or": "Or",
+    "guest_prompt": "Continue as Guest Below",
+    "sales": "Sales Inquiry",
+    "support": "Technical Support",
+    "order": "Order Status",
+    "secure_conn": "Secure Connection Established",
+    "placeholder": "Type a message...",
+    "you": "You",
+    "admin": "VIP Concierge",
+    "empty": "Start the conversation with our concierge."
+  },
+  "contact": {
+    "title": "VIP Concierge",
+    "subtitle": "Our specialists are available to assist with bespoke homologation queries, installation scheduling, and comprehensive automotive portfolio management.",
+    "chat_title": "Live Concierge",
+    "chat_desc": "Start a secure thread immediately",
+    "chat_btn": "Initiate Chat",
+    "wa_title": "Priority WhatsApp",
+    "wa_desc": "Instant response via WhatsApp",
+    "wa_btn": "Message Us",
+    "email_title": "Direct Inquiry",
+    "email_desc": "Formal requests and documentation",
+    "email_btn": "Compose Email",
+    "hours": "Operating Hours: Monday – Saturday, 09:00 – 19:00 (GMT)"
   }
 }
