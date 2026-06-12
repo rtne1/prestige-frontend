@@ -279,15 +279,15 @@ function ConfiguratorContent() {
                           </div>
                           
                           <div className="flex justify-between items-center mt-4 border-t border-white/10 pt-3">
-                              <div className="text-start">
-                                  <span className={`text-[8px] uppercase tracking-widest text-ash block mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.front_axle")}</span>
-                                  <span className="text-xs text-white/80">{oemSpec.f_width}/{oemSpec.f_profile} R{oemSpec.f_rim}</span>
-                              </div>
-                              <div className="text-end">
-                                  <span className={`text-[8px] uppercase tracking-widest text-ash block mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.rear_axle")}</span>
-                                  <span className="text-xs text-white/80">{oemSpec.r_width}/{oemSpec.r_profile} R{oemSpec.r_rim}</span>
-                              </div>
-                          </div>
+                             <div className="text-start">
+                                 <span className={`text-[8px] uppercase tracking-widest text-ash block mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.front_axle")}</span>
+                                 <span className="text-xs text-white/80">{oemSpec?.f_width}/{oemSpec?.f_profile} R{oemSpec?.f_rim}</span>
+                             </div>
+                             <div className="text-end">
+                                 <span className={`text-[8px] uppercase tracking-widest text-ash block mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.rear_axle")}</span>
+                                 <span className="text-xs text-white/80">{oemSpec?.r_width}/{oemSpec?.r_profile} R{oemSpec?.r_rim}</span>
+                             </div>
+                         </div>
                         </div>
                       ))}
                     </div>
