@@ -66,7 +66,6 @@ function ConfiguratorContent() {
   }, [brandId, router]);
 
   const handleModelClick = (m: Model) => {
-    // ONLY wipe data if they clicked a DIFFERENT car!
     if (selectedModel?.id !== m.id) {
       setSelectedYear(null);
       setOemSpec(null);
@@ -101,7 +100,6 @@ function ConfiguratorContent() {
     setTimeout(() => { qtyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150);
   };
 
-  // THE FIX: Simply close the visual drawer, DO NOT delete data!
   const closeDrawer = () => {
     setIsDrawerOpen(false);
   };
@@ -208,7 +206,7 @@ function ConfiguratorContent() {
               )}
             </div>
 
-            {/* THE DRAWER (Uses isDrawerOpen properly now!) */}
+            {/* THE DRAWER */}
             <div className={`absolute bottom-0 start-0 md:start-auto md:end-0 w-full md:w-[450px] h-full bg-obsidian/95 md:bg-carbon/95 backdrop-blur-3xl border-t md:border-t-0 md:border-s border-white/10 transition-transform duration-700 ease-luxury z-40 flex flex-col ${isDrawerOpen ? 'translate-y-0 md:translate-x-0' : 'translate-y-full md:translate-y-0 md:translate-x-full rtl:md:-translate-x-full'}`}>
               
               <div className="flex justify-between items-center p-6 border-b border-white/5 shrink-0 bg-carbon/50">
@@ -256,7 +254,6 @@ function ConfiguratorContent() {
                         const tireImg = c.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${c.media.file_path}` : null;
                         
                         return (
-                          // THE FIX: Perfectly contained tire image layout!
                           <div key={c.id} onClick={() => handleCompoundClick(c)} className={`relative p-5 rounded-2xl border cursor-pointer transition-all duration-500 overflow-hidden group flex items-center justify-between min-h-[140px] ${selectedCompound?.id === c.id ? 'bg-crimson/10 border-crimson shadow-[0_0_20px_rgba(204,0,0,0.2)]' : 'bg-carbon/40 border-white/10 hover:border-white/30 hover:bg-carbon/60'}`}>
                             
                             <div className="relative z-10 w-[60%] flex flex-col h-full">
@@ -277,7 +274,6 @@ function ConfiguratorContent() {
                               </div>
                             </div>
 
-                            {/* Safe Tire Image Layout */}
                             <div className="absolute top-0 bottom-0 end-0 w-[40%] flex items-center justify-center p-3 transition-transform duration-700 ease-luxury group-hover:scale-110 pointer-events-none">
                                 {tireImg && <img src={tireImg} alt={c.model_name} className="max-h-[110px] w-auto object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] relative z-10" />}
                                 {selectedCompound?.id === c.id && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-crimson/20 blur-2xl rounded-full z-0"></div>}
@@ -320,14 +316,18 @@ function ConfiguratorContent() {
         </div>
       )}
 
-      {/* PHASE 2: REVIEW (Unchanged) */}
+      {/* PHASE 2: REVIEW */}
       {phase === "review" && (
         <div className="flex-grow overflow-y-auto px-6 py-12 lg:p-20 hide-scrollbar animate-[fadeInUp_0.4s_ease-out]">
           <div className="max-w-2xl mx-auto">
+            
             <div className="bg-carbon border border-white/10 p-6 md:p-10 mb-8 rounded-2xl text-start relative overflow-hidden">
+              
+              {/* THE FIX: Object-Contain ensures the image NEVER stretches, regardless of size! */}
               {selectedCompound?.media?.file_path && (
-                <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${selectedCompound.media.file_path}`} className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-[-10%]' : 'right-[-10%]'} h-[150%] opacity-[0.03] pointer-events-none mix-blend-luminosity`} />
+                <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${selectedCompound.media.file_path}`} className={`absolute inset-y-0 ${lang === 'ar' ? 'left-[-10%]' : 'right-[-10%]'} w-[50%] h-full object-contain opacity-[0.04] pointer-events-none mix-blend-screen`} />
               )}
+              
               <h3 className={`font-cinzel text-2xl mb-8 border-b border-white/10 pb-6 relative z-10 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("configurator.review")}</h3>
               <div className="space-y-6 relative z-10">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
@@ -336,7 +336,7 @@ function ConfiguratorContent() {
                 </div>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_fitment")}</span>
-                  <span className="font-light text-white text-sm">
+                  <span className="font-light text-white text-sm text-start md:text-end">
                     F: {oemSpec?.f_width}/{oemSpec?.f_profile} R{oemSpec?.f_rim} <br className="md:hidden"/>
                     R: {oemSpec?.r_width}/{oemSpec?.r_profile} R{oemSpec?.r_rim}
                   </span>
@@ -352,9 +352,19 @@ function ConfiguratorContent() {
               </div>
             </div>
 
-            <div className="relative mt-8">
-              <textarea className="w-full bg-carbon border border-white/10 outline-none transition-colors text-white p-6 rounded-2xl focus:border-crimson min-h-[120px] resize-none peer" placeholder=" " value={notes} onChange={(e) => setNotes(e.target.value)} />
-              <label className={`absolute ${lang === 'ar' ? 'right-6' : 'left-6'} top-6 text-sm text-ash transition-all pointer-events-none uppercase tracking-widest peer-focus:-top-3 peer-focus:text-[10px] peer-focus:bg-obsidian peer-focus:px-2 peer-focus:text-crimson peer-placeholder-shown:top-6 peer-placeholder-shown:text-sm -top-3 text-[10px] bg-obsidian px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.special_notes")}</label>
+            {/* THE FIX: Highly visible Notes box with beautiful inner styling and placeholder */}
+            <div className="mt-10 flex flex-col text-start">
+              <label className={`text-[10px] uppercase tracking-widest text-ash mb-3 px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                {t("configurator.special_notes")}
+              </label>
+              <div className="p-[1px] rounded-2xl bg-gradient-to-b from-white/10 to-transparent">
+                <textarea 
+                  className="w-full bg-obsidian border-none outline-none transition-all text-white p-5 rounded-2xl focus:ring-1 focus:ring-crimson min-h-[140px] resize-none text-sm placeholder:text-ash/30" 
+                  placeholder={t("configurator.notes_placeholder")}
+                  value={notes} 
+                  onChange={(e) => setNotes(e.target.value)} 
+                />
+              </div>
             </div>
 
             <div className="mt-8 flex flex-col md:flex-row gap-4">
