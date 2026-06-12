@@ -35,10 +35,18 @@
     "vehicle": "Vehicle",
     "compound": "Compound",
     "specs": "Specifications",
-    "wa_greeting": "Hello Prestige Concierge,\n\nI would like to request tires for my vehicle.\n\n*Vehicle:*",
-    "wa_tire": "*Tire:*",
-    "wa_front": "*Front:*",
-    "wa_rear": "*Rear:*"
+    "wa_greeting": "Hello, I would like to request tires for my vehicle.",
+    "wa_tire": "Tire",
+    "wa_front": "Front",
+    "wa_rear": "Rear",
+    "qty_title": "Required Tires",
+    "qty_all": "All 4 Tires",
+    "qty_front_2": "2 Front Tires",
+    "qty_rear_2": "2 Rear Tires",
+    "qty_front_1": "1 Front Tire",
+    "qty_rear_1": "1 Rear Tire",
+    "qty_label": "Quantity",
+    "select_tire_brand": "Select Tire Brand"
   },
   "chat": {
     "title": "Customer Service",
