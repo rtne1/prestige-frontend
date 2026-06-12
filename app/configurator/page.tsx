@@ -10,7 +10,8 @@ interface Brand { id: number; name: string; media: { file_path: string } | null;
 interface Model { id: number; name: string; media: { file_path: string } | null; }
 interface Year { id: number; year: number; }
 interface OemSpec { f_width: number; f_profile: number; f_rim: number; r_width: number; r_profile: number; r_rim: number; }
-interface Compound { id: number; model_name: string; specs: any; brand: { name: string; media_id: number | null }; }
+// THE FIX: Added `media` to the Compound Interface so TypeScript accepts the image!
+interface Compound { id: number; model_name: string; specs: any; brand: { name: string; media_id: number | null }; media: { file_path: string } | null; }
 
 function ConfiguratorContent() {
   const router = useRouter();
@@ -29,16 +30,13 @@ function ConfiguratorContent() {
   const [years, setYears] = useState<Year[]>([]);
   const [compounds, setCompounds] = useState<Compound[]>([]);
   
-  // --- NEW: DRAWER STATE ---
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const qtyRef = useRef<HTMLDivElement>(null);
 
-  // --- SELECTION STATE ---
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [selectedYear, setSelectedYear] = useState<Year | null>(null);
   const [oemSpec, setOemSpec] = useState<OemSpec | null>(null);
   
-  // NEW: Tire Brand Selection
   const [selectedTireBrand, setSelectedTireBrand] = useState<string | null>(null);
   const [selectedCompound, setSelectedCompound] = useState<Compound | null>(null);
   
@@ -69,7 +67,6 @@ function ConfiguratorContent() {
     return () => { document.body.style.overflow = 'auto'; };
   }, [brandId, router]);
 
-  // Handle Model Click: Preserves data if same car, wipes if new car
   const handleModelClick = (m: Model) => {
     if (selectedModel?.id !== m.id) {
       setSelectedYear(null);
@@ -102,18 +99,20 @@ function ConfiguratorContent() {
   const handleCompoundClick = (c: Compound) => {
     setSelectedCompound(c);
     setTireQty("");
-    // Auto-scroll to Quantity smoothly
-    setTimeout(() => {
-      qtyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
+    setTimeout(() => { qtyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150);
+  };
+
+  const closeDrawer = () => {
+    setSelectedModel(null);
+    setSelectedYear(null);
+    setSelectedCompound(null);
+    setTireQty("");
   };
 
   const handleWhatsApp = () => {
     if (!selectedModel || !selectedYear || !selectedCompound || !oemSpec || !tireQty) return;
-    
     const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
     
-    // Flawless Formatting
     const text = `${t("configurator.wa_greeting")}
 
 *${t("configurator.vehicle")}:* ${selectedYear.year} ${brand?.name} ${selectedModel.name}
@@ -163,7 +162,6 @@ function ConfiguratorContent() {
       {phase === "gallery" && (
         <div className="flex flex-col h-full animate-[fadeInUp_0.4s_ease-out]">
           
-          {/* HEADER: Search Bar */}
           <div className="px-6 md:px-12 py-4 shrink-0 flex flex-col md:flex-row justify-between items-center gap-4 z-20">
             <h1 className={`font-cinzel text-3xl tracking-widest uppercase ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
               {brand?.name}
@@ -180,18 +178,12 @@ function ConfiguratorContent() {
             </div>
           </div>
 
-          {/* MAIN CONTAINER: Prevents Drawer from overlapping header */}
           <div className="relative flex-1 w-full flex overflow-hidden">
             
-            {/* INVISIBLE BACKDROP to close drawer by clicking outside */}
             {isDrawerOpen && (
-              <div 
-                className="absolute inset-0 z-30 hidden md:block cursor-pointer" 
-                onClick={() => setIsDrawerOpen(false)} 
-              />
+              <div className="absolute inset-0 z-30 hidden md:block cursor-pointer bg-obsidian/30 backdrop-blur-sm transition-all" onClick={() => setIsDrawerOpen(false)} />
             )}
 
-            {/* GALLERY GRID */}
             <div className="flex-1 overflow-y-auto overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none hide-scrollbar px-6 md:px-12 py-4 md:py-8 w-full">
               {filteredModels.length === 0 ? (
                 <div className="w-full text-center text-ash font-light mt-10">No models found.</div>
@@ -219,25 +211,22 @@ function ConfiguratorContent() {
               )}
             </div>
 
-            {/* THE DRAWER (Desktop slides in, Mobile slides up) */}
+            {/* THE DRAWER */}
             <div className={`absolute bottom-0 start-0 md:start-auto md:end-0 w-full md:w-[450px] h-full bg-obsidian/95 md:bg-carbon/95 backdrop-blur-3xl border-t md:border-t-0 md:border-s border-white/10 transition-transform duration-700 ease-luxury z-40 flex flex-col ${isDrawerOpen ? 'translate-y-0 md:translate-x-0' : 'translate-y-full md:translate-y-0 md:translate-x-full rtl:md:-translate-x-full'}`}>
               
-              {/* Drawer Header (Close Button) */}
               <div className="flex justify-between items-center p-6 border-b border-white/5 shrink-0 bg-carbon/50">
                 <div>
                   <h3 className={`font-cinzel text-xl text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{selectedModel?.name}</h3>
                   <p className="text-[10px] text-ash uppercase tracking-widest mt-1">{brand?.name}</p>
                 </div>
-                <button onClick={() => setIsDrawerOpen(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-ash hover:text-white hover:bg-white/10 transition-colors">
+                <button onClick={closeDrawer} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-ash hover:text-white hover:bg-white/10 transition-colors">
                   <svg className="w-5 h-5 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
                   <svg className="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
                 </button>
               </div>
 
-              {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-6 md:p-8 hide-scrollbar">
                 
-                {/* 1. Year Selection */}
                 <div className="mb-8">
                   <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_year")}</h4>
                   <div className="flex flex-wrap gap-2">
@@ -249,7 +238,6 @@ function ConfiguratorContent() {
                   </div>
                 </div>
 
-                {/* 2. Tire Brand Selection */}
                 {selectedYear && oemSpec && (
                   <div className="mb-8 animate-[fadeInUp_0.4s_ease-out]">
                     <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_tire_brand")}</h4>
@@ -263,38 +251,56 @@ function ConfiguratorContent() {
                   </div>
                 )}
 
-                {/* 3. Tire Compound Selection */}
+                {/* THE FIX: ELITE TIRE CARDS WITH DYNAMIC IMAGES */}
                 {selectedTireBrand && (
                   <div className="mb-8 animate-[fadeInUp_0.4s_ease-out]">
                     <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_tire")}</h4>
                     <div className="grid grid-cols-1 gap-4 mb-4">
-                      {filteredCompounds.map(c => (
-                        <div key={c.id} onClick={() => handleCompoundClick(c)} className={`p-4 md:p-5 rounded-xl border cursor-pointer transition-all flex flex-col ${selectedCompound?.id === c.id ? 'bg-crimson/10 border-crimson shadow-[0_0_15px_rgba(204,0,0,0.2)]' : 'bg-obsidian md:bg-carbon/50 border-white/10 hover:border-white/30'}`}>
-                          <div className="flex justify-between items-start">
-                            <div className="text-start">
-                              <span className="text-[9px] uppercase tracking-widest text-ash block">{c.brand.name}</span>
-                              <h5 className={`font-cinzel text-lg text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{c.model_name}</h5>
+                      {filteredCompounds.map(c => {
+                        // Dynamically pull the tire image you upload in the dashboard!
+                        const tireImg = c.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${c.media.file_path}` : null;
+                        
+                        return (
+                          <div key={c.id} onClick={() => handleCompoundClick(c)} className={`relative p-5 md:p-6 rounded-2xl border cursor-pointer transition-all duration-500 overflow-hidden group flex flex-col justify-between min-h-[150px] ${selectedCompound?.id === c.id ? 'bg-crimson/10 border-crimson shadow-[0_0_20px_rgba(204,0,0,0.2)]' : 'bg-carbon/40 border-white/10 hover:border-white/30 hover:bg-carbon/60'}`}>
+                            
+                            {/* TIRE IMAGE LAYER (RTL Aware!) */}
+                            <div className={`absolute ${lang === 'ar' ? 'left-[-15%] md:left-[-5%]' : 'right-[-15%] md:right-[-5%]'} top-1/2 -translate-y-1/2 h-[130%] w-[55%] pointer-events-none transition-all duration-700 ease-luxury group-hover:scale-105 opacity-80 group-hover:opacity-100 z-0`}>
+                                {tireImg && <img src={tireImg} alt={c.model_name} className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]" />}
+                                {selectedCompound?.id === c.id && <div className={`absolute top-1/2 ${lang === 'ar' ? 'left-1/2' : 'right-1/2'} -translate-y-1/2 translate-x-1/2 w-32 h-32 bg-crimson/20 blur-3xl rounded-full`}></div>}
                             </div>
-                            {selectedCompound?.id === c.id && <svg className="w-5 h-5 text-crimson" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>}
+
+                            {/* TEXT CONTENT LAYER */}
+                            <div className="relative z-10 w-[65%] md:w-[70%]">
+                              <div className="text-start mb-6">
+                                <span className="text-[9px] uppercase tracking-widest text-ash block mb-1">{c.brand.name}</span>
+                                <h5 className={`font-cinzel text-xl text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{c.model_name}</h5>
+                              </div>
+                              
+                              <div className="flex items-center gap-4 border-t border-white/10 pt-4">
+                                  <div className="text-start">
+                                      <span className={`text-[8px] uppercase tracking-widest text-ash block mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.front_axle")}</span>
+                                      <span className="text-xs text-white/90 font-medium">{oemSpec?.f_width}/{oemSpec?.f_profile} <span className="text-[10px] text-ash">R{oemSpec?.f_rim}</span></span>
+                                  </div>
+                                  <div className="w-[1px] h-6 bg-white/10"></div>
+                                  <div className="text-start">
+                                      <span className={`text-[8px] uppercase tracking-widest text-ash block mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.rear_axle")}</span>
+                                      <span className="text-xs text-white/90 font-medium">{oemSpec?.r_width}/{oemSpec?.r_profile} <span className="text-[10px] text-ash">R{oemSpec?.r_rim}</span></span>
+                                  </div>
+                              </div>
+                            </div>
+
+                            {selectedCompound?.id === c.id && (
+                              <div className={`absolute top-4 ${lang === 'ar' ? 'left-4' : 'right-4'} text-crimson z-20 animate-pulse`}>
+                                  <svg className="w-6 h-6 drop-shadow-[0_0_10px_rgba(204,0,0,0.5)]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+                              </div>
+                            )}
                           </div>
-                          
-                          <div className="flex justify-between items-center mt-4 border-t border-white/10 pt-3">
-                             <div className="text-start">
-                                 <span className={`text-[8px] uppercase tracking-widest text-ash block mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.front_axle")}</span>
-                                 <span className="text-xs text-white/80">{oemSpec?.f_width}/{oemSpec?.f_profile} R{oemSpec?.f_rim}</span>
-                             </div>
-                             <div className="text-end">
-                                 <span className={`text-[8px] uppercase tracking-widest text-ash block mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.rear_axle")}</span>
-                                 <span className="text-xs text-white/80">{oemSpec?.r_width}/{oemSpec?.r_profile} R{oemSpec?.r_rim}</span>
-                             </div>
-                         </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* 4. Tire Quantity Selector (With Auto-Scroll Ref) */}
                 <div ref={qtyRef} className="pt-2">
                   {selectedCompound && (
                     <div className="animate-[fadeInUp_0.3s_ease-out] mb-12">
@@ -309,11 +315,10 @@ function ConfiguratorContent() {
                     </div>
                   )}
                 </div>
-
               </div>
 
-              {/* ACTION BUTTONS (Appears only after Quantity) */}
-              <div className={`p-6 border-t border-white/5 flex flex-col gap-3 transition-all duration-500 bg-obsidian md:bg-carbon shrink-0 ${tireQty !== "" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none hidden'}`}>
+              {/* ACTION BUTTONS */}
+              <div className={`p-6 border-t border-white/5 flex flex-col gap-3 transition-all duration-500 bg-obsidian shrink-0 ${tireQty !== "" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none hidden'}`}>
                 <button onClick={handleWhatsApp} className={`w-full bg-[#25D366] text-obsidian px-6 py-4 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,211,102,0.2)] ${lang === 'ar' ? 'font-cairo' : ''}`}>
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.124.553 4.195 1.603 6.015L.175 24l6.105-1.597c1.761.954 3.743 1.458 5.751 1.458 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm0 21.907c-1.808 0-3.582-.486-5.13-1.405l-.368-.218-3.811.996.996-3.811-.218-.368c-.919-1.548-1.405-3.322-1.405-5.13 0-5.546 4.514-10.06 10.06-10.06 5.546 0 10.06 4.514 10.06 10.06 0 5.546-4.514 10.06-10.06 10.06zm5.522-7.533c-.303-.152-1.794-.886-2.072-.987-.278-.101-.481-.152-.683.152-.202.303-.784.987-.96 1.189-.177.202-.354.227-.657.076-.303-.152-1.281-.473-2.441-1.506-.902-.803-1.509-1.794-1.686-2.097-.177-.303-.019-.467.133-.618.136-.136.303-.354.455-.53.152-.177.202-.303.303-.505.101-.202.051-.38-.025-.531-.076-.152-.683-1.646-.935-2.253-.246-.593-.496-.512-.683-.521-.177-.009-.38-.009-.582-.009-.202 0-.53.076-.808.38-.278.303-1.062 1.037-1.062 2.53s1.087 2.934 1.239 3.136c.152.202 2.137 3.262 5.176 4.571 2.222.956 3.037.91 4.148.758 1.111-.152 2.375-.987 2.704-1.921.329-.935.329-1.744.227-1.921-.102-.177-.38-.278-.684-.43z"/></svg>
                   {t("configurator.contact_now")}
@@ -322,20 +327,25 @@ function ConfiguratorContent() {
                   {t("configurator.continue")}
                 </button>
               </div>
-
             </div>
           </div>
         </div>
       )}
 
-      {/* PHASE 2: REVIEW (For saving to the Vault) */}
+      {/* PHASE 2: REVIEW */}
       {phase === "review" && (
         <div className="flex-grow overflow-y-auto px-6 py-12 lg:p-20 hide-scrollbar animate-[fadeInUp_0.4s_ease-out]">
           <div className="max-w-2xl mx-auto">
-            {/* Same Review Code as Before */}
-            <div className="bg-carbon border border-white/10 p-6 md:p-10 mb-8 rounded-2xl text-start">
-              <h3 className={`font-cinzel text-2xl mb-8 border-b border-white/10 pb-6 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("configurator.review")}</h3>
-              <div className="space-y-6">
+            
+            <div className="bg-carbon border border-white/10 p-6 md:p-10 mb-8 rounded-2xl text-start relative overflow-hidden">
+              
+              {/* Subtle background image of the tire in the review screen! */}
+              {selectedCompound?.media?.file_path && (
+                <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${selectedCompound.media.file_path}`} className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-[-10%]' : 'right-[-10%]'} h-[150%] opacity-[0.03] pointer-events-none mix-blend-luminosity`} />
+              )}
+              
+              <h3 className={`font-cinzel text-2xl mb-8 border-b border-white/10 pb-6 relative z-10 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("configurator.review")}</h3>
+              <div className="space-y-6 relative z-10">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.vehicle")}</span>
                   <span className="font-medium text-white">{selectedYear?.year} {brand?.name} {selectedModel?.name}</span>
