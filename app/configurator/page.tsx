@@ -259,8 +259,12 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
 
             <div className="mt-8 flex flex-col md:flex-row gap-4">
               <button onClick={() => setPhase("gallery")} className={`w-full md:w-1/3 bg-transparent border border-white/20 text-white px-6 py-4 rounded-xl uppercase tracking-widest text-[10px] hover:bg-white/10 transition-colors ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("configurator.back")}</button>
-              <button onClick={handleAuthorize} isLoading={isSubmitting} className={`w-full md:w-2/3 bg-crimson text-white px-6 py-4 rounded-xl uppercase tracking-widest text-[10px] font-bold hover:bg-white hover:text-obsidian transition-colors shadow-[0_0_30px_rgba(204,0,0,0.3)] ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>
-                {user ? t("configurator.auth_req") : t("configurator.auth_to_auth")}
+              <button 
+                onClick={handleAuthorize} 
+                disabled={isSubmitting} 
+                className={`w-full md:w-2/3 bg-crimson text-white px-6 py-4 rounded-xl uppercase tracking-widest text-[10px] font-bold hover:bg-white hover:text-obsidian transition-colors shadow-[0_0_30px_rgba(204,0,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
+              >
+                {isSubmitting ? "..." : (user ? t("configurator.auth_req") : t("configurator.auth_to_auth"))}
               </button>
             </div>
           </div>
