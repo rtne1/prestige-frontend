@@ -18,14 +18,11 @@
   },
   "configurator": {
     "the_studio": "TIRE SELECTION",
-    "step_1": "Vehicle",
-    "step_2": "Sizes",
-    "step_3": "Tires",
-    "step_4": "Review",
-    "select_marque": "1. Select Brand",
-    "select_model": "2. Select Model",
-    "prod_year": "3. Year",
-    "continue": "Continue",
+    "search_models": "Search models...",
+    "select_year": "Select Production Year",
+    "select_tire": "Select Tire Compound",
+    "contact_now": "Contact Us Now",
+    "continue": "Continue to Vault",
     "back": "Back",
     "auth_req": "Submit Request",
     "auth_to_auth": "Sign in to Submit",
@@ -36,7 +33,12 @@
     "review": "Specification Review",
     "oem_fitment": "Recommended Sizes",
     "vehicle": "Vehicle",
-    "compound": "Compound"
+    "compound": "Compound",
+    "specs": "Specifications",
+    "wa_greeting": "Hello Prestige Concierge,\n\nI would like to request tires for my vehicle.\n\n*Vehicle:*",
+    "wa_tire": "*Tire:*",
+    "wa_front": "*Front:*",
+    "wa_rear": "*Rear:*"
   },
   "chat": {
     "title": "Customer Service",
