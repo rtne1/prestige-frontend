@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import api from "@/lib/api";
 
-// --- Types ---
 interface Brand { id: number; name: string; media: { file_path: string } | null; }
 interface Model { id: number; name: string; media: { file_path: string } | null; }
 interface Year { id: number; year: number; }
@@ -21,35 +20,38 @@ function ConfiguratorContent() {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   
-  // State: Core Phase
   const [phase, setPhase] = useState<"gallery" | "review">("gallery");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State: Data
   const [brand, setBrand] = useState<Brand | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  
   const [years, setYears] = useState<Year[]>([]);
   const [compounds, setCompounds] = useState<Compound[]>([]);
   
-  // State: Selections
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [selectedYear, setSelectedYear] = useState<Year | null>(null);
   const [oemSpec, setOemSpec] = useState<OemSpec | null>(null);
   const [selectedCompound, setSelectedCompound] = useState<Compound | null>(null);
+  
+  // NEW: Tire Quantity State
+  const [tireQty, setTireQty] = useState("all");
   const [notes, setNotes] = useState("");
 
   const WHATSAPP_NUMBER = "966568890653"; // CHANGE THIS TO YOUR REAL NUMBER
 
+  const qtyOptions = [
+    { id: "all", label: t("configurator.qty_all") },
+    { id: "front_2", label: t("configurator.qty_front_2") },
+    { id: "rear_2", label: t("configurator.qty_rear_2") },
+    { id: "front_1", label: t("configurator.qty_front_1") },
+    { id: "rear_1", label: t("configurator.qty_rear_1") },
+  ];
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    if (!brandId) {
-      router.push("/");
-      return;
-    }
+    if (!brandId) { router.push("/"); return; }
     
-    // Fetch Brand and Models
     api.get("/vehicles/brands").then(res => {
       const b = res.data.data.find((x: any) => x.id === Number(brandId));
       if (b) setBrand(b);
@@ -60,47 +62,47 @@ function ConfiguratorContent() {
     return () => { document.body.style.overflow = 'auto'; };
   }, [brandId, router]);
 
-  // Handle Model Selection
   const handleModelClick = (m: Model) => {
-    setSelectedModel(m);
-    setSelectedYear(null);
-    setOemSpec(null);
-    setSelectedCompound(null);
+    setSelectedModel(m); setSelectedYear(null); setOemSpec(null); setSelectedCompound(null);
     api.get(`/vehicles/models/${m.id}/years`).then(res => setYears(res.data.data));
   };
 
-  // Handle Year Selection
   const handleYearClick = (y: Year) => {
-    setSelectedYear(y);
-    setSelectedCompound(null);
+    setSelectedYear(y); setSelectedCompound(null);
     api.get(`/vehicles/years/${y.id}/oem-specs`).then(res => {
       setOemSpec(res.data.data || { f_width: 0, f_profile: 0, f_rim: 0, r_width: 0, r_profile: 0, r_rim: 0 });
     });
   };
 
-  // Build WhatsApp Message
   const handleWhatsApp = () => {
     if (!selectedModel || !selectedYear || !selectedCompound || !oemSpec) return;
     
-    const text = `${t("configurator.wa_greeting")} ${selectedYear.year} ${brand?.name} ${selectedModel.name}
+    const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
     
-${t("configurator.wa_tire")} ${selectedCompound.brand.name} ${selectedCompound.model_name}
-${t("configurator.wa_front")} ${oemSpec.f_width}/${oemSpec.f_profile} R${oemSpec.f_rim}
-${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.r_rim}`;
+    // NEW: Flawless WhatsApp Line-Break Formatting
+    const text = `${t("configurator.wa_greeting")}
+
+*${t("configurator.vehicle")}:* ${selectedYear.year} ${brand?.name} ${selectedModel.name}
+*${t("configurator.wa_tire")}:* ${selectedCompound.brand.name} ${selectedCompound.model_name}
+*${t("configurator.wa_front")}:* ${oemSpec.f_width}/${oemSpec.f_profile} R${oemSpec.f_rim}
+*${t("configurator.wa_rear")}:* ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.r_rim}
+*${t("configurator.qty_label")}:* ${qtyLabel}`;
 
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  // Handle Submission to Vault
   const submitToVault = async () => {
     setIsSubmitting(true);
     try {
+      const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
+      const combinedNotes = `[${t("configurator.qty_label")}: ${qtyLabel}]\n${notes}`.trim();
+
       const vehRes = await api.post("/garage/vehicles", { vehicle_year_id: selectedYear?.id, nickname: null });
       await api.post("/garage/requests", {
         user_vehicle_id: vehRes.data.data.id,
         compound_id: selectedCompound?.id,
         ...oemSpec,
-        client_notes: notes || null
+        client_notes: combinedNotes || null
       });
       router.push("/garage");
     } catch (error) {
@@ -114,20 +116,16 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
       const configData = { selectedYear: selectedYear?.id, selectedCompound: selectedCompound?.id, dimensions: oemSpec, notes };
       localStorage.setItem("pending_config", JSON.stringify(configData));
       router.push("/auth");
-    } else {
-      submitToVault();
-    }
+    } else submitToVault();
   };
 
   const filteredModels = models.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-obsidian text-white overflow-hidden pt-[80px]">
-      
       {phase === "gallery" && (
         <div className="flex flex-col h-full animate-[fadeInUp_0.4s_ease-out]">
           
-          {/* HEADER: Search Bar */}
           <div className="px-6 md:px-12 py-4 shrink-0 flex flex-col md:flex-row justify-between items-center gap-4 z-20">
             <h1 className={`font-cinzel text-3xl tracking-widest uppercase ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
               {brand?.name}
@@ -144,30 +142,26 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
             </div>
           </div>
 
-          {/* GALLERY: Horizontal Snapping List */}
-          <div className="flex-1 overflow-y-hidden overflow-x-auto snap-x snap-mandatory hide-scrollbar flex items-center px-6 md:px-12 pb-[40vh]">
+          {/* FIX: Mobile = Horizontal Swipe. Desktop = Beautiful Grid */}
+          <div className="flex-1 overflow-y-auto overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none hide-scrollbar px-6 md:px-12 pb-[40vh] md:pb-24 pt-4">
             {filteredModels.length === 0 ? (
               <div className="w-full text-center text-ash font-light">No models found.</div>
             ) : (
-              <div className="flex gap-4 md:gap-8 h-[50vh] min-h-[400px]">
+              <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 h-[50vh] md:h-auto min-h-[400px] md:min-h-0">
                 {filteredModels.map(m => {
                   const isActive = selectedModel?.id === m.id;
-                  const imageUrl = m.media?.file_path 
-                    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${m.media.file_path}`
-                    : "https://images.unsplash.com/photo-1503376712351-404c0ecbd2b3?q=80&w=1000&auto=format&fit=crop";
-
+                  const imageUrl = m.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${m.media.file_path}` : "https://images.unsplash.com/photo-1503376712351-404c0ecbd2b3?q=80&w=1000&auto=format&fit=crop";
                   return (
                     <div 
                       key={m.id}
                       onClick={() => handleModelClick(m)}
-                      className={`relative w-[85vw] md:w-[400px] h-full rounded-2xl overflow-hidden snap-center cursor-pointer transition-all duration-500 ease-luxury border ${isActive ? 'border-crimson shadow-[0_0_30px_rgba(204,0,0,0.3)] scale-100' : 'border-white/10 scale-95 opacity-50 hover:opacity-100'}`}
+                      className={`relative w-[85vw] md:w-full h-full md:h-[300px] lg:h-[400px] rounded-2xl overflow-hidden snap-center md:snap-align-none shrink-0 md:shrink cursor-pointer transition-all duration-500 ease-luxury border ${isActive ? 'border-crimson shadow-[0_0_30px_rgba(204,0,0,0.3)] scale-100' : 'border-white/10 md:scale-100 scale-95 opacity-50 hover:opacity-100 hover:border-white/30'}`}
                     >
                       <img src={imageUrl} alt={m.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] hover:scale-110" />
                       <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent"></div>
-                      
-                      <div className={`absolute bottom-8 ${lang === 'ar' ? 'right-8 text-start' : 'left-8 text-start'} z-10 w-full pr-16`}>
+                      <div className={`absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'right-6 md:right-8 text-start' : 'left-6 md:left-8 text-start'} z-10 w-full pr-16`}>
                         <p className="text-[10px] uppercase tracking-widest text-crimson mb-1">{brand?.name}</p>
-                        <h3 className={`font-cinzel text-2xl md:text-3xl text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{m.name}</h3>
+                        <h3 className={`font-cinzel text-xl md:text-2xl text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{m.name}</h3>
                       </div>
                     </div>
                   );
@@ -176,12 +170,9 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
             )}
           </div>
 
-          {/* BOTTOM OVERLAY: Years, Tires, Actions (Slides up when model selected) */}
-          <div className={`absolute bottom-0 left-0 w-full bg-obsidian/95 backdrop-blur-2xl border-t border-white/10 transition-all duration-700 ease-luxury z-40 flex flex-col ${selectedModel ? 'translate-y-0 opacity-100 max-h-[60vh]' : 'translate-y-full opacity-0 max-h-0'}`}>
-            
+          <div className={`absolute bottom-0 left-0 w-full bg-obsidian/95 backdrop-blur-2xl border-t border-white/10 transition-all duration-700 ease-luxury z-40 flex flex-col ${selectedModel ? 'translate-y-0 opacity-100 max-h-[70vh] md:max-h-[60vh]' : 'translate-y-full opacity-0 max-h-0'}`}>
             <div className="flex-1 overflow-y-auto p-6 md:p-12 hide-scrollbar">
               
-              {/* Year Selection */}
               <div className="mb-8">
                 <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_year")}</h4>
                 <div className="flex flex-wrap gap-2">
@@ -193,11 +184,10 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
                 </div>
               </div>
 
-              {/* Tire Selection (Appears after Year) */}
               {selectedYear && oemSpec && (
                 <div className="animate-[fadeInUp_0.4s_ease-out]">
                   <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_tire")}</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     {compounds.map(c => (
                       <div key={c.id} onClick={() => setSelectedCompound(c)} className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${selectedCompound?.id === c.id ? 'bg-crimson/10 border-crimson shadow-[0_0_15px_rgba(204,0,0,0.2)]' : 'bg-carbon/50 border-white/10 hover:border-white/30'}`}>
                         <div className="text-start">
@@ -209,11 +199,24 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
                       </div>
                     ))}
                   </div>
+
+                  {/* NEW: TIRE QUANTITY SELECTOR */}
+                  {selectedCompound && (
+                    <div className="animate-[fadeInUp_0.3s_ease-out]">
+                      <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.qty_title")}</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {qtyOptions.map(opt => (
+                          <button key={opt.id} onClick={() => setTireQty(opt.id)} className={`px-4 py-2 rounded-lg border text-xs md:text-sm transition-all ${tireQty === opt.id ? 'bg-white border-white text-obsidian font-semibold shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-transparent border-white/20 text-ash hover:border-white hover:text-white'} ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* ACTION BUTTONS (Appears after Tire) */}
             <div className={`p-6 md:px-12 border-t border-white/5 flex flex-col md:flex-row gap-4 transition-all duration-500 ${selectedCompound ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none hidden'}`}>
               <button onClick={handleWhatsApp} className={`w-full md:w-2/3 bg-[#25D366] text-obsidian px-6 py-4 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-3 ${lang === 'ar' ? 'font-cairo' : ''}`}>
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.124.553 4.195 1.603 6.015L.175 24l6.105-1.597c1.761.954 3.743 1.458 5.751 1.458 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm0 21.907c-1.808 0-3.582-.486-5.13-1.405l-.368-.218-3.811.996.996-3.811-.218-.368c-.919-1.548-1.405-3.322-1.405-5.13 0-5.546 4.514-10.06 10.06-10.06 5.546 0 10.06 4.514 10.06 10.06 0 5.546-4.514 10.06-10.06 10.06zm5.522-7.533c-.303-.152-1.794-.886-2.072-.987-.278-.101-.481-.152-.683.152-.202.303-.784.987-.96 1.189-.177.202-.354.227-.657.076-.303-.152-1.281-.473-2.441-1.506-.902-.803-1.509-1.794-1.686-2.097-.177-.303-.019-.467.133-.618.136-.136.303-.354.455-.53.152-.177.202-.303.303-.505.101-.202.051-.38-.025-.531-.076-.152-.683-1.646-.935-2.253-.246-.593-.496-.512-.683-.521-.177-.009-.38-.009-.582-.009-.202 0-.53.076-.808.38-.278.303-1.062 1.037-1.062 2.53s1.087 2.934 1.239 3.136c.152.202 2.137 3.262 5.176 4.571 2.222.956 3.037.91 4.148.758 1.111-.152 2.375-.987 2.704-1.921.329-.935.329-1.744.227-1.921-.102-.177-.38-.278-.684-.43z"/></svg>
@@ -227,7 +230,7 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
         </div>
       )}
 
-      {/* PHASE 2: REVIEW & VAULT SUBMISSION (Only if user clicked "Continue") */}
+      {/* PHASE 2: REVIEW (Simplified intentionally) */}
       {phase === "review" && (
         <div className="flex-grow overflow-y-auto px-6 py-12 lg:p-20 hide-scrollbar animate-[fadeInUp_0.4s_ease-out]">
           <div className="max-w-2xl mx-auto">
@@ -239,15 +242,8 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
                   <span className="font-medium text-white">{selectedYear?.year} {brand?.name} {selectedModel?.name}</span>
                 </div>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
-                  <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_fitment")}</span>
-                  <span className="font-light text-white text-sm">
-                    F: {oemSpec?.f_width}/{oemSpec?.f_profile} R{oemSpec?.f_rim} <br className="md:hidden"/>
-                    R: {oemSpec?.r_width}/{oemSpec?.r_profile} R{oemSpec?.r_rim}
-                  </span>
-                </div>
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
-                  <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.compound")}</span>
-                  <span className="font-medium text-crimson">{selectedCompound?.brand.name} {selectedCompound?.model_name}</span>
+                  <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.qty_label")}</span>
+                  <span className="font-medium text-crimson">{qtyOptions.find(o => o.id === tireQty)?.label}</span>
                 </div>
               </div>
             </div>
@@ -259,18 +255,13 @@ ${t("configurator.wa_rear")} ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.
 
             <div className="mt-8 flex flex-col md:flex-row gap-4">
               <button onClick={() => setPhase("gallery")} className={`w-full md:w-1/3 bg-transparent border border-white/20 text-white px-6 py-4 rounded-xl uppercase tracking-widest text-[10px] hover:bg-white/10 transition-colors ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("configurator.back")}</button>
-              <button 
-                onClick={handleAuthorize} 
-                disabled={isSubmitting} 
-                className={`w-full md:w-2/3 bg-crimson text-white px-6 py-4 rounded-xl uppercase tracking-widest text-[10px] font-bold hover:bg-white hover:text-obsidian transition-colors shadow-[0_0_30px_rgba(204,0,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
-              >
+              <button onClick={handleAuthorize} disabled={isSubmitting} className={`w-full md:w-2/3 bg-crimson text-white px-6 py-4 rounded-xl uppercase tracking-widest text-[10px] font-bold hover:bg-white hover:text-obsidian transition-colors shadow-[0_0_30px_rgba(204,0,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>
                 {isSubmitting ? "..." : (user ? t("configurator.auth_req") : t("configurator.auth_to_auth"))}
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }
