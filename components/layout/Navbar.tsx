@@ -40,12 +40,10 @@ export function Navbar() {
             : 'bg-transparent py-6 md:py-8 border-none'
         }`}
       >
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex justify-between items-center w-full">
-          
-          {/* LEFT: Logo */}
-          <Link href="/" className="font-cinzel text-xl md:text-2xl tracking-[0.2em] font-semibold text-white relative z-[60]">
-            PRESTIGE<span className="text-crimson">.</span>
-          </Link>
+        <div className="flex items-center gap-6">
+            <Link href="/" className="font-cinzel text-xl md:text-2xl tracking-[0.2em] font-semibold text-white relative z-[60]">
+              MR. TIRES<span className="text-crimson">.</span>
+            </Link>
 
           {/* RIGHT: Lang Toggle, Links, and Hamburger */}
           <div className="flex items-center gap-6 md:gap-10 relative z-[60]">

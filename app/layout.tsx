@@ -9,8 +9,8 @@ import { CustomCursor } from "@/components/ui/CustomCursor";
 import { ChatWidget } from "@/components/ui/ChatWidget";
 
 export const metadata: Metadata = {
-  title: "Prestige Auto Care | Elite Performance",
-  description: "The ultimate tire configurator for exotic and luxury vehicles.",
+  title: "Mr. Tires | Elite Performance",
+  description: "The premium tire selection for luxury and high-performance vehicles.",
 };
 
 export default function RootLayout({
