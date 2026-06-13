@@ -5,11 +5,7 @@ import Link from "next/link";
 import api from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-interface Brand { 
-  id: number; 
-  name: string; 
-  media: { file_path: string } | null; 
-}
+interface Brand { id: number; name: string; media: { file_path: string } | null; }
 
 export default function Home() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -33,7 +29,7 @@ export default function Home() {
   }, [brands.length]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-obsidian">
       
       {/* CINEMATIC HERO SECTION */}
       <section className="relative h-screen flex flex-col justify-center overflow-hidden">
@@ -42,16 +38,17 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-obsidian/80"></div>
         </div>
         
-        {/* Refined, Editorial Typography */}
-        <div className="relative z-10 px-6 md:px-16 lg:px-24 w-full max-w-[1600px] mx-auto mt-20">
+        <div className="relative z-10 px-6 md:px-16 lg:px-24 w-full max-w-[1600px] mx-auto mt-20 pointer-events-none">
           <span className={`block text-crimson tracking-[0.3em] text-[10px] md:text-xs font-semibold uppercase mb-6 opacity-0 animate-[fadeInUp_1s_forwards] ${lang === 'ar' ? 'font-cairo' : ''}`}>
             {t("home.subtitle")}
           </span>
-          <h1 className={`font-cinzel text-5xl md:text-7xl lg:text-[7rem] leading-[1.1] mb-12 opacity-0 animate-[fadeInUp_1s_0.2s_forwards] ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : 'tracking-wide'}`}>
+          <h1 className={`font-cinzel text-5xl md:text-7xl lg:text-[7rem] leading-[1.1] mb-12 opacity-0 animate-[fadeInUp_1s_0.2s_forwards] text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : 'tracking-wide'}`}>
             {t("home.title_1")}<br/>
-            <span className="text-white">{t("home.title_2")}</span>
+            {t("home.title_2")}
           </h1>
-          <div className="opacity-0 animate-[fadeInUp_1s_0.4s_forwards]">
+          
+          {/* THE FIX: pointer-events-auto ensures the button is strictly clickable above the background! */}
+          <div className="opacity-0 animate-[fadeInUp_1s_0.4s_forwards] pointer-events-auto">
             <Link href="/configurator" className="inline-block bg-white text-obsidian px-10 py-5 uppercase tracking-[0.2em] text-xs font-semibold hover:bg-crimson hover:text-white transition-all duration-500 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
               {t("home.enter_studio")}
             </Link>
@@ -68,7 +65,7 @@ export default function Home() {
       <section id="studio" className="py-24 md:py-40 px-6 md:px-12 max-w-[1600px] mx-auto w-full relative z-10">
         <div className="flex flex-col justify-start items-start mb-12 md:mb-20 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-luxury text-start w-full">
           <div className="w-full text-start">
-            <h2 className={`font-cinzel text-3xl md:text-5xl mb-4 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("home.select_marque")}</h2>
+            <h2 className={`font-cinzel text-3xl md:text-5xl mb-4 text-white ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("home.select_marque")}</h2>
             <p className={`text-ash font-light text-sm md:text-base tracking-wide ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("home.choose_mfg")}</p>
           </div>
         </div>
@@ -80,7 +77,6 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 delay-200 ease-luxury">
             {brands.map((brand) => {
-              // Automatically pull the image you uploaded in the dashboard, or use a sleek fallback
               const imageUrl = brand.media?.file_path 
                 ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${brand.media.file_path}`
                 : "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=1000&auto=format&fit=crop";
@@ -91,14 +87,10 @@ export default function Home() {
                   key={brand.id}
                   className="group relative h-[250px] md:h-[400px] w-full bg-carbon overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-500 block"
                 >
-                  {/* Image is PERMANENTLY visible for flawless mobile UX */}
                   <img src={imageUrl} alt={brand.name} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-80 group-hover:scale-105 transition-all duration-[1.5s] ease-luxury" />
-                  
-                  {/* Dark gradient so text is always readable */}
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent"></div>
                   
-                  {/* Editorial Text pinned to the bottom corner */}
-                  <div className="absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'left-0 w-full text-center z-10 px-4">
+                  <div className="absolute bottom-6 md:bottom-8 left-0 w-full text-center z-10 px-4">
                     <span className={`font-cinzel text-2xl md:text-3xl tracking-[0.2em] text-white group-hover:text-crimson transition-colors duration-500 ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
                       {brand.name.toUpperCase()}
                     </span>
@@ -109,7 +101,6 @@ export default function Home() {
           </div>
         )}
       </section>
-
     </div>
   );
 }
