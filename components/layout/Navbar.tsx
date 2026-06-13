@@ -41,9 +41,10 @@ export function Navbar() {
         }`}
       >
         <div className="flex items-center gap-6">
-            <Link href="/" className="font-cinzel text-xl md:text-2xl tracking-[0.2em] font-semibold text-white relative z-[60]">
-              MR. TIRES<span className="text-crimson">.</span>
-            </Link>
+            {/* LEFT: Logo - Added whitespace-nowrap and shrink-0 to prevent breaking */}
+          <Link href="/" className="font-cinzel text-lg md:text-xl tracking-[0.2em] font-semibold text-white relative z-[60] whitespace-nowrap shrink-0">
+            MR. TIRES<span className="text-crimson">.</span>
+          </Link>
 
           {/* RIGHT: Lang Toggle, Links, and Hamburger */}
           <div className="flex items-center gap-6 md:gap-10 relative z-[60]">

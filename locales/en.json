@@ -52,7 +52,7 @@
   "chat": {
     "title": "Mr. Tires Support",
     "subtitle": "We reply immediately",
-    "welcome": "Hello! How can we help you today?",
+    "welcome": "Hello! How can we help you at Mr. Tires today?",
     "auth_prompt": "Please sign in for a better experience.",
     "sign_in": "Sign In / Register",
     "or": "Or",
@@ -65,7 +65,7 @@
     "you": "You",
     "admin": "Support",
     "empty": "Start the conversation with our support team."
-  },
+  }
   "contact": {
     "title": "Customer Support",
     "subtitle": "Our team is ready to help you find the right tires, schedule installation, and answer your questions.",
