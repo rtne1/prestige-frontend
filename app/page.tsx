@@ -39,7 +39,7 @@ export default function Home() {
         </div>
         
         <div className="relative z-10 px-6 md:px-16 lg:px-24 w-full max-w-[1600px] mx-auto mt-20 pointer-events-none">
-          <span className={`block text-crimson tracking-[0.3em] text-[10px] md:text-xs font-semibold uppercase mb-6 opacity-0 animate-[fadeInUp_1s_forwards] ${lang === 'ar' ? 'font-cairo' : ''}`}>
+          <span className={`block text-ash tracking-[0.3em] text-[10px] md:text-xs font-semibold uppercase mb-6 opacity-0 animate-[fadeInUp_1s_forwards] ${lang === 'ar' ? 'font-cairo' : ''}`}>
             {t("home.subtitle")}
           </span>
           <h1 className={`font-cinzel text-5xl md:text-7xl lg:text-[7rem] leading-[1.1] mb-12 opacity-0 animate-[fadeInUp_1s_0.2s_forwards] text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : 'tracking-wide'}`}>
