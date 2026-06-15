@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import api from "@/lib/api";
 
-interface Tire { id: number; model_name: string; brand: { name: string }; media: { file_path: string } | null; }
+interface Tire { id: number; model_name: string; specs: any; brand: { name: string }; media: { file_path: string } | null; }
 interface VehicleResult { id: number; year: number; model: { name: string; brand: { name: string } }; oemSpec: any; }
 
 function OrderVehicleContent() {
@@ -38,7 +38,6 @@ function OrderVehicleContent() {
 
   const WHATSAPP_NUMBER = "966568890653";
 
-  // Reusing strings we already have in the configurator dictionary
   const qtyOptions = [
     { id: "all", label: t("configurator.qty_all") },
     { id: "front_2", label: t("configurator.qty_front_2") },
@@ -85,15 +84,14 @@ function OrderVehicleContent() {
   const selectVehicle = (v: VehicleResult) => {
     setSelectedVehicle(v);
     setStep(2); 
+    // Auto-scroll slightly to Step 2 on mobile
+    window.scrollTo({ top: window.scrollY + 200, behavior: "smooth" });
   };
 
   const handleWhatsApp = () => {
     if (!tire || !selectedVehicle || !tireQty) return;
     const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
-    
-    // Uses translated WhatsApp template
     const text = `${t("configurator.wa_greeting")}\n\n${t("configurator.wa_tire")} ${tire.brand.name} ${tire.model_name}\n*${t("order.selected_vehicle")}:* ${selectedVehicle.year} ${selectedVehicle.model.brand.name} ${selectedVehicle.model.name}\n*${t("configurator.qty_label")}:* ${qtyLabel}\n\n*${t("order.special_notes")}:* ${notes}`;
-    
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -130,7 +128,7 @@ function OrderVehicleContent() {
       <div className="max-w-[1200px] mx-auto w-full px-6 md:px-12 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 items-start">
         
         {/* LEFT COLUMN: Tire Summary */}
-        <div className="bg-carbon/50 border border-white/5 p-8 rounded-3xl lg:sticky lg:top-32 flex flex-col items-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+        <div className="bg-carbon/50 border border-white/5 p-8 rounded-3xl lg:sticky lg:top-32 flex flex-col items-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10">
           {tireImg ? (
             <img src={tireImg} alt={tire?.model_name} className="w-48 h-auto drop-shadow-[0_20px_20px_rgba(0,0,0,0.8)] mb-6" />
           ) : (
@@ -176,7 +174,7 @@ function OrderVehicleContent() {
                     {isSearching && <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} w-4 h-4 border-2 border-glass border-t-crimson rounded-full animate-spin`}></div>}
                     
                     {searchResults.length > 0 && (
-                      <div className="mt-4 bg-obsidian border border-white/5 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                      <div className="mt-4 bg-obsidian border border-white/5 rounded-xl overflow-hidden max-h-60 overflow-y-auto hide-scrollbar shadow-xl">
                         {searchResults.map(v => (
                           <button key={v.id} onClick={() => selectVehicle(v)} className="w-full text-start px-6 py-4 text-sm border-b border-white/5 hover:bg-carbon hover:text-crimson transition-colors last:border-0 flex justify-between items-center group">
                             <span>{v.year} {v.model.brand.name} {v.model.name}</span>
@@ -215,7 +213,7 @@ function OrderVehicleContent() {
             )}
           </div>
 
-          {/* STEP 2 */}
+          {/* STEP 2: WITH SPECS & SIZES ADDED BACK */}
           <div className={`bg-carbon border rounded-3xl p-6 md:p-10 transition-all duration-500 ${step === 2 ? 'border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.05)]' : 'border-white/5 opacity-60 pointer-events-none'}`}>
             <div className="flex justify-between items-center mb-8 gap-4">
               <h2 className={`font-cinzel text-xl md:text-2xl ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_2_title")}</h2>
@@ -224,6 +222,47 @@ function OrderVehicleContent() {
 
             {step === 2 && (
               <div className="animate-[fadeInUp_0.3s_ease-out]">
+                
+                {/* --- NEW: VEHICLE SIZES --- */}
+                {selectedVehicle?.oemSpec && (
+                  <div className="mb-10">
+                    <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_fitment")}</h4>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1 bg-obsidian border border-white/5 p-5 rounded-2xl">
+                        <span className={`text-[10px] uppercase tracking-widest text-ash block mb-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.front_axle")}</span>
+                        <span className="text-sm md:text-base text-white font-medium">{selectedVehicle.oemSpec.f_width}/{selectedVehicle.oemSpec.f_profile} <span className="text-ash text-xs">R{selectedVehicle.oemSpec.f_rim}</span></span>
+                      </div>
+                      <div className="flex-1 bg-obsidian border border-white/5 p-5 rounded-2xl">
+                        <span className={`text-[10px] uppercase tracking-widest text-ash block mb-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.rear_axle")}</span>
+                        <span className="text-sm md:text-base text-white font-medium">{selectedVehicle.oemSpec.r_width}/{selectedVehicle.oemSpec.r_profile} <span className="text-ash text-xs">R{selectedVehicle.oemSpec.r_rim}</span></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* --- NEW: TIRE SPECS --- */}
+                {tire?.specs && Object.keys(tire.specs).length > 0 && (
+                  <div className="mb-10">
+                    <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.specs")}</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {Object.entries(tire.specs).map(([key, value]) => {
+                        const translatedKey = t(`specs.${key.toLowerCase()}`);
+                        const displayKey = translatedKey.includes("specs.") ? key.replace(/_/g, ' ') : translatedKey;
+                        return (
+                          <div key={key} className="bg-obsidian border border-white/5 p-4 rounded-xl text-start">
+                            <span className={`block text-[9px] uppercase tracking-wider text-ash mb-1 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{displayKey}</span>
+                            <span className="block text-xs font-medium text-white">{String(value)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="h-[1px] w-full bg-white/10 my-8"></div>
+
+                {/* QUANTITY */}
+                <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.qty_title")}</h4>
                 <div className="flex flex-wrap gap-3 mb-8">
                   {qtyOptions.map(opt => (
                     <button key={opt.id} onClick={() => setTireQty(opt.id)} className={`px-5 py-3 rounded-xl border text-xs transition-all ${lang === 'ar' ? 'font-cairo' : ''} ${tireQty === opt.id ? 'bg-white border-white text-obsidian font-semibold shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-obsidian border-white/10 text-ash hover:border-white hover:text-white'}`}>
@@ -243,9 +282,9 @@ function OrderVehicleContent() {
                 </div>
 
                 <button 
-                  onClick={() => setStep(3)} 
+                  onClick={() => { setStep(3); window.scrollTo({ top: window.scrollY + 200, behavior: "smooth" }); }} 
                   disabled={!tireQty}
-                  className={`w-full bg-white text-obsidian px-6 py-4 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-crimson hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
+                  className={`w-full bg-white text-obsidian px-6 py-5 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-crimson hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
                 >
                   {t("order.continue_review")}
                 </button>
@@ -265,7 +304,7 @@ function OrderVehicleContent() {
                     <span className={lang === 'ar' ? 'font-cairo' : ''}>{t("order.wa_btn")}</span>
                   </button>
 
-                  <button onClick={handleContinueToVault} disabled={isSubmitting} className="flex-1 bg-crimson text-white px-6 py-5 rounded-xl uppercase tracking-widest text-[10px] font-bold hover:bg-white hover:text-obsidian transition-all shadow-[0_0_30px_rgba(204,0,0,0.3)] disabled:opacity-50 flex flex-col items-center justify-center gap-2">
+                  <button onClick={handleContinueToVault} disabled={isSubmitting} className="flex-1 bg-crimson text-white px-6 py-5 rounded-xl uppercase tracking-widest text-[10px] md:text-xs font-bold hover:bg-white hover:text-obsidian transition-all shadow-[0_0_30px_rgba(204,0,0,0.3)] disabled:opacity-50 flex flex-col items-center justify-center gap-2">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                     <span className={lang === 'ar' ? 'font-cairo' : ''}>
                       {isSubmitting ? t("order.processing") : (user ? t("order.submit_dashboard") : t("order.login_submit"))}
