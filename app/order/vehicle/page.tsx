@@ -6,8 +6,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import api from "@/lib/api";
 
-interface Tire { id: number; model_name: string; specs: any; brand: { name: string }; media: { file_path: string } | null; }
-interface VehicleResult { id: number; year: number; model: { name: string; brand: { name: string } }; oemSpec: any; }
+interface Tire { 
+  id: number; 
+  model_name: string; 
+  specs: Record<string, any>; 
+  brand: { name: string }; 
+  media: { file_path: string } | null; 
+}
+
+interface VehicleResult { 
+  id: number; 
+  year: number; 
+  model: { name: string; brand: { name: string } }; 
+  oemSpec: any; 
+}
 
 function OrderVehicleContent() {
   const router = useRouter();
@@ -84,14 +96,16 @@ function OrderVehicleContent() {
   const selectVehicle = (v: VehicleResult) => {
     setSelectedVehicle(v);
     setStep(2); 
-    // Auto-scroll slightly to Step 2 on mobile
-    window.scrollTo({ top: window.scrollY + 200, behavior: "smooth" });
+    // Auto-scroll to step 2 on mobile
+    window.scrollTo({ top: window.innerHeight / 2, behavior: "smooth" });
   };
 
   const handleWhatsApp = () => {
     if (!tire || !selectedVehicle || !tireQty) return;
     const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
-    const text = `${t("configurator.wa_greeting")}\n\n${t("configurator.wa_tire")} ${tire.brand.name} ${tire.model_name}\n*${t("order.selected_vehicle")}:* ${selectedVehicle.year} ${selectedVehicle.model.brand.name} ${selectedVehicle.model.name}\n*${t("configurator.qty_label")}:* ${qtyLabel}\n\n*${t("order.special_notes")}:* ${notes}`;
+    
+    const text = `${t("configurator.wa_greeting")}\n\n${t("configurator.wa_tire")} ${tire.brand.name} ${tire.model_name}\n*${t("order.selected_vehicle")}:* ${selectedVehicle.year} ${selectedVehicle.model.brand.name} ${selectedVehicle.model.name}\n*${t("configurator.wa_front")}:* ${selectedVehicle.oemSpec.f_width}/${selectedVehicle.oemSpec.f_profile} R${selectedVehicle.oemSpec.f_rim}\n*${t("configurator.wa_rear")}:* ${selectedVehicle.oemSpec.r_width}/${selectedVehicle.oemSpec.r_profile} R${selectedVehicle.oemSpec.r_rim}\n*${t("configurator.qty_label")}:* ${qtyLabel}\n\n*${t("order.special_notes")}:* ${notes}`;
+    
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -124,39 +138,61 @@ function OrderVehicleContent() {
   const tireImg = tire?.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${tire.media.file_path}` : null;
 
   return (
-    <div className="min-h-screen bg-obsidian text-white pt-[100px] pb-32">
-      <div className="max-w-[1200px] mx-auto w-full px-6 md:px-12 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 items-start">
+    <div className="min-h-screen bg-obsidian text-white pt-[100px] pb-32 relative overflow-hidden">
+      {/* Premium Ambient Background */}
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-crimson/5 blur-[120px] rounded-full pointer-events-none z-0"></div>
+
+      <div className="max-w-[1400px] mx-auto w-full px-6 md:px-12 grid grid-cols-1 lg:grid-cols-[400px_1fr] xl:grid-cols-[450px_1fr] gap-8 lg:gap-12 relative z-10 items-start">
         
-        {/* LEFT COLUMN: Tire Summary */}
-        <div className="bg-carbon/50 border border-white/5 p-8 rounded-3xl lg:sticky lg:top-32 flex flex-col items-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10">
-          {tireImg ? (
-            <img src={tireImg} alt={tire?.model_name} className="w-48 h-auto drop-shadow-[0_20px_20px_rgba(0,0,0,0.8)] mb-6" />
-          ) : (
-             <div className="w-48 h-48 bg-white/5 rounded-full mb-6 flex items-center justify-center text-ash/30 text-xs font-semibold">{t("order.no_image")}</div>
-          )}
-          <span className="text-[10px] uppercase tracking-[0.2em] text-ash mb-2 block">{tire?.brand.name}</span>
-          <h3 className={`font-cinzel text-2xl text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{tire?.model_name}</h3>
-          
-          {selectedVehicle && (
-            <div className="mt-8 pt-8 border-t border-white/10 w-full text-start animate-[fadeInUp_0.4s_ease-out]">
-              <span className={`text-[10px] uppercase tracking-widest text-ash mb-1 block ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.selected_vehicle")}</span>
-              <p className="text-sm font-medium text-white">{selectedVehicle.year} {selectedVehicle.model.brand.name} {selectedVehicle.model.name}</p>
+        {/* ================= LEFT COLUMN: THE TIRE DOSSIER ================= */}
+        <div className="bg-carbon/60 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] lg:sticky lg:top-32 flex flex-col shadow-[0_30px_60px_rgba(0,0,0,0.6)] text-start overflow-hidden relative group">
+          {/* Subtle hover glow */}
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-crimson/20 blur-3xl rounded-full transition-all duration-700 group-hover:bg-crimson/30 z-0"></div>
+
+          <div className="relative z-10 flex flex-col items-center border-b border-white/10 pb-8 mb-8">
+            {tireImg ? (
+              <img src={tireImg} alt={tire?.model_name} className="w-56 lg:w-64 h-auto drop-shadow-[0_20px_20px_rgba(0,0,0,0.8)] mb-6 transition-transform duration-700 group-hover:scale-105" />
+            ) : (
+               <div className="w-56 h-56 bg-white/5 rounded-full mb-6 flex items-center justify-center text-ash/30 text-xs font-semibold">{t("order.no_image")}</div>
+            )}
+            <span className="text-[10px] uppercase tracking-[0.3em] text-crimson mb-2 block font-semibold">{tire?.brand.name}</span>
+            <h3 className={`font-cinzel text-3xl text-white text-center ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{tire?.model_name}</h3>
+          </div>
+
+          {/* Tire Specs Grid */}
+          <div className="relative z-10 flex-1">
+            <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.specs")}</h4>
+            <div className="grid grid-cols-2 gap-3">
+              {tire?.specs && Object.keys(tire.specs).length > 0 ? (
+                Object.entries(tire.specs).map(([key, value]) => {
+                  const translatedKey = t(`specs.${key.toLowerCase()}`);
+                  const displayKey = translatedKey.includes("specs.") ? key.replace(/_/g, ' ') : translatedKey;
+                  return (
+                    <div key={key} className="bg-obsidian/50 border border-white/5 p-3 rounded-xl flex flex-col justify-center">
+                      <span className={`text-[9px] uppercase tracking-wider text-ash/70 mb-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{displayKey}</span>
+                      <span className="text-sm font-medium text-white/90">{String(value)}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-2 text-xs text-ash/50 font-light">Specifications will be verified by concierge.</div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* RIGHT COLUMN: The Journey Steps */}
+        {/* ================= RIGHT COLUMN: THE JOURNEY STEPS ================= */}
         <div className="space-y-6 text-start">
           
-          {/* STEP 1 */}
-          <div className={`bg-carbon border rounded-3xl p-6 md:p-10 transition-all duration-500 ${step === 1 ? 'border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.05)]' : 'border-white/5 opacity-60'}`}>
-            <div className="flex justify-between items-center mb-8 gap-4">
-              <h2 className={`font-cinzel text-xl md:text-2xl ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_1_title")}</h2>
-              {step > 1 && <button onClick={() => setStep(1)} className={`text-[10px] uppercase tracking-widest text-crimson hover:text-white ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.edit")}</button>}
+          {/* STEP 1: VEHICLE SELECTION */}
+          <div className={`bg-carbon/40 backdrop-blur-xl border rounded-[2rem] p-6 md:p-10 transition-all duration-700 ${step === 1 ? 'border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.3)]' : 'border-white/5 opacity-50'}`}>
+            <div className="flex justify-between items-center mb-8 gap-4 border-b border-white/5 pb-6">
+              <h2 className={`font-cinzel text-xl md:text-2xl text-white ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_1_title")}</h2>
+              {step > 1 && <button onClick={() => setStep(1)} className={`text-[10px] uppercase tracking-widest text-crimson hover:text-white px-4 py-2 border border-crimson/30 rounded-full hover:bg-crimson/10 transition-colors ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.edit")}</button>}
             </div>
 
             {step === 1 && (
-              <div className="animate-[fadeInUp_0.3s_ease-out]">
+              <div className="animate-[fadeInUp_0.4s_ease-out]">
                 <div className="flex p-1 bg-obsidian rounded-xl mb-8 border border-white/5">
                   <button onClick={() => setTab("search")} className={`flex-1 py-3 text-[10px] md:text-xs uppercase tracking-widest rounded-lg transition-all ${lang === 'ar' ? 'font-cairo font-bold' : ''} ${tab === "search" ? 'bg-carbon text-white shadow-sm border border-white/10' : 'text-ash hover:text-white'}`}>{t("order.smart_search")}</button>
                   <button onClick={() => setTab("manual")} className={`flex-1 py-3 text-[10px] md:text-xs uppercase tracking-widest rounded-lg transition-all ${lang === 'ar' ? 'font-cairo font-bold' : ''} ${tab === "manual" ? 'bg-carbon text-white shadow-sm border border-white/10' : 'text-ash hover:text-white'}`}>{t("order.manual_select")}</button>
@@ -169,12 +205,12 @@ function OrderVehicleContent() {
                       placeholder={t("order.search_placeholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`w-full bg-obsidian border border-white/10 rounded-xl py-4 text-sm text-white outline-none focus:border-crimson transition-all ${lang === 'ar' ? 'pr-6 pl-12 font-cairo' : 'pl-6 pr-12'}`}
+                      className={`w-full bg-obsidian border border-white/10 rounded-2xl py-5 text-base text-white outline-none focus:border-crimson transition-all ${lang === 'ar' ? 'pr-6 pl-12 font-cairo' : 'pl-6 pr-12'}`}
                     />
-                    {isSearching && <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} w-4 h-4 border-2 border-glass border-t-crimson rounded-full animate-spin`}></div>}
+                    {isSearching && <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} w-5 h-5 border-2 border-glass border-t-crimson rounded-full animate-spin`}></div>}
                     
                     {searchResults.length > 0 && (
-                      <div className="mt-4 bg-obsidian border border-white/5 rounded-xl overflow-hidden max-h-60 overflow-y-auto hide-scrollbar shadow-xl">
+                      <div className="mt-4 bg-obsidian border border-white/5 rounded-2xl overflow-hidden max-h-64 overflow-y-auto shadow-2xl">
                         {searchResults.map(v => (
                           <button key={v.id} onClick={() => selectVehicle(v)} className="w-full text-start px-6 py-4 text-sm border-b border-white/5 hover:bg-carbon hover:text-crimson transition-colors last:border-0 flex justify-between items-center group">
                             <span>{v.year} {v.model.brand.name} {v.model.name}</span>
@@ -188,20 +224,20 @@ function OrderVehicleContent() {
 
                 {tab === "manual" && (
                   <div className="space-y-4">
-                    <select onChange={(e) => handleBrandChange(Number(e.target.value))} className={`w-full bg-obsidian border border-white/10 rounded-xl px-6 py-4 text-sm text-white outline-none focus:border-crimson appearance-none ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                    <select onChange={(e) => handleBrandChange(Number(e.target.value))} className={`w-full bg-obsidian border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none ${lang === 'ar' ? 'font-cairo' : ''}`}>
                       <option value="">{t("order.select_brand")}</option>
                       {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                     </select>
                     {selBrand && (
-                      <select onChange={(e) => handleModelChange(Number(e.target.value))} className={`w-full bg-obsidian border border-white/10 rounded-xl px-6 py-4 text-sm text-white outline-none focus:border-crimson appearance-none animate-[fadeInUp_0.3s_ease-out] ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                      <select onChange={(e) => handleModelChange(Number(e.target.value))} className={`w-full bg-obsidian border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none animate-[fadeInUp_0.3s_ease-out] ${lang === 'ar' ? 'font-cairo' : ''}`}>
                         <option value="">{t("order.select_model")}</option>
                         {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                       </select>
                     )}
                     {selModel && years.length > 0 && (
-                      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 pt-2 animate-[fadeInUp_0.3s_ease-out]">
+                      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 pt-4 animate-[fadeInUp_0.3s_ease-out]">
                         {years.map(y => (
-                          <button key={y.id} onClick={() => selectVehicle(y)} className="bg-obsidian border border-white/10 rounded-xl py-3 text-sm hover:border-crimson hover:bg-crimson/10 transition-colors">
+                          <button key={y.id} onClick={() => selectVehicle(y)} className="bg-obsidian border border-white/10 rounded-xl py-4 text-sm hover:border-crimson hover:bg-crimson/10 transition-colors">
                             {y.year}
                           </button>
                         ))}
@@ -213,68 +249,53 @@ function OrderVehicleContent() {
             )}
           </div>
 
-          {/* STEP 2: WITH SPECS & SIZES ADDED BACK */}
-          <div className={`bg-carbon border rounded-3xl p-6 md:p-10 transition-all duration-500 ${step === 2 ? 'border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.05)]' : 'border-white/5 opacity-60 pointer-events-none'}`}>
-            <div className="flex justify-between items-center mb-8 gap-4">
-              <h2 className={`font-cinzel text-xl md:text-2xl ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_2_title")}</h2>
-              {step > 2 && <button onClick={() => setStep(2)} className={`text-[10px] uppercase tracking-widest text-crimson hover:text-white pointer-events-auto ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.edit")}</button>}
+          {/* STEP 2: FITMENT & DETAILS */}
+          <div className={`bg-carbon/40 backdrop-blur-xl border rounded-[2rem] p-6 md:p-10 transition-all duration-700 ${step === 2 ? 'border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.3)]' : 'border-white/5 opacity-50 pointer-events-none'}`}>
+            <div className="flex justify-between items-center mb-8 gap-4 border-b border-white/5 pb-6">
+              <h2 className={`font-cinzel text-xl md:text-2xl text-white ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_2_title")}</h2>
+              {step > 2 && <button onClick={() => setStep(2)} className={`text-[10px] uppercase tracking-widest text-crimson hover:text-white px-4 py-2 border border-crimson/30 rounded-full hover:bg-crimson/10 transition-colors pointer-events-auto ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.edit")}</button>}
             </div>
 
             {step === 2 && (
-              <div className="animate-[fadeInUp_0.3s_ease-out]">
+              <div className="animate-[fadeInUp_0.4s_ease-out]">
                 
-                {/* --- NEW: VEHICLE SIZES --- */}
+                {/* THE NEW OEM FITMENT UI */}
                 {selectedVehicle?.oemSpec && (
-                  <div className="mb-10">
-                    <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_fitment")}</h4>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <div className="flex-1 bg-obsidian border border-white/5 p-5 rounded-2xl">
-                        <span className={`text-[10px] uppercase tracking-widest text-ash block mb-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.front_axle")}</span>
-                        <span className="text-sm md:text-base text-white font-medium">{selectedVehicle.oemSpec.f_width}/{selectedVehicle.oemSpec.f_profile} <span className="text-ash text-xs">R{selectedVehicle.oemSpec.f_rim}</span></span>
+                  <div className="bg-gradient-to-br from-obsidian to-carbon border border-white/10 rounded-2xl p-6 md:p-8 mb-10 shadow-inner flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                    {/* Decorative watermark */}
+                    <svg className="absolute -right-10 -bottom-10 w-48 h-48 text-white/[0.02] pointer-events-none" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                    
+                    <div className="flex-1 w-full text-center md:text-start">
+                      <span className={`text-[10px] uppercase tracking-widest text-ash mb-2 block ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.front_axle")}</span>
+                      <div className="font-cinzel text-2xl md:text-3xl text-white">
+                        {selectedVehicle.oemSpec.f_width} / {selectedVehicle.oemSpec.f_profile} <span className="text-crimson text-xl md:text-2xl">R{selectedVehicle.oemSpec.f_rim}</span>
                       </div>
-                      <div className="flex-1 bg-obsidian border border-white/5 p-5 rounded-2xl">
-                        <span className={`text-[10px] uppercase tracking-widest text-ash block mb-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.rear_axle")}</span>
-                        <span className="text-sm md:text-base text-white font-medium">{selectedVehicle.oemSpec.r_width}/{selectedVehicle.oemSpec.r_profile} <span className="text-ash text-xs">R{selectedVehicle.oemSpec.r_rim}</span></span>
+                    </div>
+                    
+                    <div className="w-full h-px md:w-px md:h-16 bg-white/10 shrink-0"></div>
+                    
+                    <div className="flex-1 w-full text-center md:text-start">
+                      <span className={`text-[10px] uppercase tracking-widest text-ash mb-2 block ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.rear_axle")}</span>
+                      <div className="font-cinzel text-2xl md:text-3xl text-white">
+                        {selectedVehicle.oemSpec.r_width} / {selectedVehicle.oemSpec.r_profile} <span className="text-crimson text-xl md:text-2xl">R{selectedVehicle.oemSpec.r_rim}</span>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* --- NEW: TIRE SPECS --- */}
-                {tire?.specs && Object.keys(tire.specs).length > 0 && (
-                  <div className="mb-10">
-                    <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.specs")}</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {Object.entries(tire.specs).map(([key, value]) => {
-                        const translatedKey = t(`specs.${key.toLowerCase()}`);
-                        const displayKey = translatedKey.includes("specs.") ? key.replace(/_/g, ' ') : translatedKey;
-                        return (
-                          <div key={key} className="bg-obsidian border border-white/5 p-4 rounded-xl text-start">
-                            <span className={`block text-[9px] uppercase tracking-wider text-ash mb-1 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{displayKey}</span>
-                            <span className="block text-xs font-medium text-white">{String(value)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div className="h-[1px] w-full bg-white/10 my-8"></div>
-
-                {/* QUANTITY */}
-                <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.qty_title")}</h4>
-                <div className="flex flex-wrap gap-3 mb-8">
+                <h3 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.qty_title")}</h3>
+                <div className="flex flex-wrap gap-3 mb-10">
                   {qtyOptions.map(opt => (
-                    <button key={opt.id} onClick={() => setTireQty(opt.id)} className={`px-5 py-3 rounded-xl border text-xs transition-all ${lang === 'ar' ? 'font-cairo' : ''} ${tireQty === opt.id ? 'bg-white border-white text-obsidian font-semibold shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-obsidian border-white/10 text-ash hover:border-white hover:text-white'}`}>
+                    <button key={opt.id} onClick={() => setTireQty(opt.id)} className={`px-6 py-4 rounded-xl border text-xs transition-all duration-300 ${lang === 'ar' ? 'font-cairo' : ''} ${tireQty === opt.id ? 'bg-white border-white text-obsidian font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] -translate-y-1' : 'bg-obsidian border-white/10 text-ash hover:border-white hover:text-white hover:-translate-y-1'}`}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
 
-                <div className="mb-8">
+                <div className="mb-10">
                   <label className={`text-[10px] uppercase tracking-widest text-ash mb-3 block px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.special_notes")}</label>
                   <textarea 
-                    className={`w-full bg-obsidian border border-white/10 outline-none transition-all text-white p-5 rounded-xl focus:border-crimson min-h-[120px] resize-none text-sm placeholder:text-ash/30 ${lang === 'ar' ? 'font-cairo' : ''}`} 
+                    className={`w-full bg-obsidian border border-white/10 outline-none transition-all text-white p-6 rounded-2xl focus:border-crimson min-h-[140px] resize-none text-sm placeholder:text-ash/30 ${lang === 'ar' ? 'font-cairo' : ''}`} 
                     placeholder={t("order.notes_placeholder")}
                     value={notes} 
                     onChange={(e) => setNotes(e.target.value)} 
@@ -282,9 +303,9 @@ function OrderVehicleContent() {
                 </div>
 
                 <button 
-                  onClick={() => { setStep(3); window.scrollTo({ top: window.scrollY + 200, behavior: "smooth" }); }} 
+                  onClick={() => { setStep(3); window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }); }} 
                   disabled={!tireQty}
-                  className={`w-full bg-white text-obsidian px-6 py-5 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-crimson hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
+                  className={`w-full bg-white text-obsidian px-6 py-5 rounded-2xl uppercase tracking-widest text-sm font-bold hover:bg-crimson hover:text-white transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
                 >
                   {t("order.continue_review")}
                 </button>
@@ -292,28 +313,31 @@ function OrderVehicleContent() {
             )}
           </div>
 
-          {/* STEP 3 */}
-          <div className={`bg-carbon border rounded-3xl p-6 md:p-10 transition-all duration-500 ${step === 3 ? 'border-crimson/50 shadow-[0_0_40px_rgba(204,0,0,0.15)]' : 'border-white/5 opacity-60 pointer-events-none hidden md:block'}`}>
-            <h2 className={`font-cinzel text-xl md:text-2xl mb-8 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_3_title")}</h2>
+          {/* STEP 3: FINALIZE ORDER */}
+          <div className={`bg-carbon/40 backdrop-blur-xl border rounded-[2rem] p-6 md:p-10 transition-all duration-700 ${step === 3 ? 'border-crimson/50 shadow-[0_10px_50px_rgba(204,0,0,0.15)]' : 'border-white/5 opacity-50 pointer-events-none hidden md:block'}`}>
+            <h2 className={`font-cinzel text-xl md:text-2xl mb-8 text-white ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_3_title")}</h2>
 
             {step === 3 && (
-              <div className="animate-[fadeInUp_0.3s_ease-out]">
+              <div className="animate-[fadeInUp_0.4s_ease-out]">
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button onClick={handleWhatsApp} className="flex-1 bg-[#25D366] text-obsidian px-6 py-5 rounded-xl uppercase tracking-widest text-[10px] md:text-xs font-bold hover:bg-[#20bd5a] transition-all flex flex-col items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,211,102,0.2)]">
+                  <button onClick={handleWhatsApp} className="flex-1 bg-[#25D366] text-obsidian px-6 py-5 rounded-2xl uppercase tracking-widest text-[10px] md:text-xs font-bold hover:bg-[#20bd5a] transition-all flex flex-col items-center justify-center gap-3 shadow-[0_10px_30px_rgba(37,211,102,0.2)] hover:-translate-y-1">
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.124.553 4.195 1.603 6.015L.175 24l6.105-1.597c1.761.954 3.743 1.458 5.751 1.458 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm0 21.907c-1.808 0-3.582-.486-5.13-1.405l-.368-.218-3.811.996.996-3.811-.218-.368c-.919-1.548-1.405-3.322-1.405-5.13 0-5.546 4.514-10.06 10.06-10.06 5.546 0 10.06 4.514 10.06 10.06 0 5.546-4.514 10.06-10.06 10.06zm5.522-7.533c-.303-.152-1.794-.886-2.072-.987-.278-.101-.481-.152-.683.152-.202.303-.784.987-.96 1.189-.177.202-.354.227-.657.076-.303-.152-1.281-.473-2.441-1.506-.902-.803-1.509-1.794-1.686-2.097-.177-.303-.019-.467.133-.618.136-.136.303-.354.455-.53.152-.177.202-.303.303-.505.101-.202.051-.38-.025-.531-.076-.152-.683-1.646-.935-2.253-.246-.593-.496-.512-.683-.521-.177-.009-.38-.009-.582-.009-.202 0-.53.076-.808.38-.278.303-1.062 1.037-1.062 2.53s1.087 2.934 1.239 3.136c.152.202 2.137 3.262 5.176 4.571 2.222.956 3.037.91 4.148.758 1.111-.152 2.375-.987 2.704-1.921.329-.935.329-1.744.227-1.921-.102-.177-.38-.278-.684-.43z"/></svg>
                     <span className={lang === 'ar' ? 'font-cairo' : ''}>{t("order.wa_btn")}</span>
                   </button>
 
-                  <button onClick={handleContinueToVault} disabled={isSubmitting} className="flex-1 bg-crimson text-white px-6 py-5 rounded-xl uppercase tracking-widest text-[10px] md:text-xs font-bold hover:bg-white hover:text-obsidian transition-all shadow-[0_0_30px_rgba(204,0,0,0.3)] disabled:opacity-50 flex flex-col items-center justify-center gap-2">
+                  <button onClick={handleContinueToVault} disabled={isSubmitting} className="flex-1 bg-crimson text-white px-6 py-5 rounded-2xl uppercase tracking-widest text-[10px] md:text-xs font-bold hover:bg-white hover:text-obsidian transition-all shadow-[0_10px_40px_rgba(204,0,0,0.4)] hover:-translate-y-1 disabled:opacity-50 disabled:hover:translate-y-0 flex flex-col items-center justify-center gap-3">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                     <span className={lang === 'ar' ? 'font-cairo' : ''}>
                       {isSubmitting ? t("order.processing") : (user ? t("order.submit_dashboard") : t("order.login_submit"))}
                     </span>
                   </button>
                 </div>
-                <p className={`text-center text-ash text-[10px] tracking-widest uppercase mt-6 ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                  {t("order.concierge_notice")}
-                </p>
+                
+                <div className="mt-8 pt-6 border-t border-white/5">
+                  <p className={`text-center text-ash/70 text-[10px] tracking-[0.2em] uppercase leading-relaxed ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                    {t("order.concierge_notice")}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -326,7 +350,7 @@ function OrderVehicleContent() {
 
 export default function Page() {
   return (
-    <Suspense fallback={<div className="h-screen w-full bg-obsidian flex items-center justify-center"><div className="w-8 h-8 border-2 border-glass border-t-crimson rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={<div className="h-screen w-full bg-obsidian flex items-center justify-center"><div className="w-10 h-10 border-2 border-glass border-t-crimson rounded-full animate-spin"></div></div>}>
       <OrderVehicleContent />
     </Suspense>
   );
