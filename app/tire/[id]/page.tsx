@@ -8,14 +8,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface TireCompound {
   id: number;
   model_name: string;
-  specs: any; // Changed to 'any' to handle strings, objects, or null automatically
+  specs: any;
   brand: { name: string; media_id: number | null };
   media: { file_path: string } | null;
   homologatedBrands: Array<{ id: number; name: string }>;
 }
 
 const SpecIcons: Record<string, React.ReactNode> = {
-  size: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>,
   traction: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v8l9-11h-7z" /></svg>,
   speed: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   load: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>,
@@ -29,7 +28,6 @@ export default function TireDetailsPage() {
   const [tire, setTire] = useState<TireCompound | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // We use a query parameter to force a fresh API call (bypassing any browser cache)
   useEffect(() => {
     if (!params.id) return;
     const fetchTire = async () => {
@@ -63,30 +61,25 @@ export default function TireDetailsPage() {
   // --- BULLETPROOF DATA EXTRACTION ---
   let specs: Record<string, any> = {};
   
-  // Safely parse the database data no matter what format Laravel sent it in
   if (typeof tire.specs === 'string') {
     try { specs = JSON.parse(tire.specs); } catch (e) { console.error("Specs is invalid JSON string"); }
   } else if (typeof tire.specs === 'object' && tire.specs !== null) {
     specs = tire.specs;
   }
-
-  // Identify if the backend actually sent anything
-  const hasSpecs = Object.keys(specs).length > 0;
-  const isUndefined = tire.specs === undefined;
   
-  // Helper to find keys regardless of uppercase/lowercase/spaces
   const findSpec = (keywords: string[]) => {
     const foundKey = Object.keys(specs).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
     return foundKey ? { key: foundKey, value: specs[foundKey] } : null;
   };
 
+  // ONLY highlighting Traction, Speed, and Load in the main cards now. Size is removed from here!
   const heroSpecs = {
-    size: findSpec(['size', 'مقاس', 'dimension']),
     traction: findSpec(['traction', 'تماسك', 'grip']),
     speed: findSpec(['speed', 'سرعة', 'rating']),
     load: findSpec(['load', 'حمولة', 'index', 'weight']),
   };
 
+  // Everything else (INCLUDING YOUR SIZES) will naturally flow into Additional Details
   const remainingSpecs = Object.entries(specs).filter(([key]) => 
     !Object.values(heroSpecs).some(hs => hs?.key === key)
   );
@@ -97,7 +90,7 @@ export default function TireDetailsPage() {
 
       <div className="max-w-[1400px] mx-auto w-full px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 relative z-10">
         
-        {/* ================= LEFT COLUMN ================= */}
+        {/* LEFT COLUMN */}
         <div className="flex flex-col items-center justify-start lg:sticky lg:top-32 h-fit animate-[fadeInUp_0.6s_ease-out]">
           <div className="w-full text-center lg:text-start mb-8 lg:hidden">
             <span className="text-[10px] uppercase tracking-[0.3em] text-crimson font-bold mb-2 block">{tire.brand.name}</span>
@@ -113,7 +106,7 @@ export default function TireDetailsPage() {
           </div>
         </div>
 
-        {/* ================= RIGHT COLUMN ================= */}
+        {/* RIGHT COLUMN */}
         <div className="flex flex-col justify-start animate-[fadeInUp_0.8s_ease-out]">
           
           <div className="hidden lg:block mb-10 border-b border-white/10 pb-8 text-start">
@@ -121,31 +114,13 @@ export default function TireDetailsPage() {
             <h1 className={`font-cinzel text-5xl xl:text-6xl text-white leading-tight drop-shadow-lg ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{tire.model_name}</h1>
           </div>
 
-          {/* DIAGNOSTIC CHECK (If Backend is hiding data, this shows up) */}
-          {(!hasSpecs || isUndefined) && (
-             <div className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-start">
-               <p className="text-xs text-red-400 font-mono">
-                 [SYSTEM DIAGNOSTIC] <br/> 
-                 Backend sent specs as: {isUndefined ? "UNDEFINED (Check protected $hidden in Model)" : (tire.specs === null ? "NULL (Database is empty)" : typeof tire.specs)}
-               </p>
-             </div>
-          )}
-
-          {/* 1. HERO SPECS */}
+          {/* 1. HERO SPECS (Only Traction, Speed, Load) */}
           <div className="mb-12">
             <h3 className={`text-[10px] uppercase tracking-[0.2em] text-ash mb-6 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>
               {t("tire.specifications")}
             </h3>
             
-            <div className="grid grid-cols-2 gap-4">
-              {heroSpecs.size && (
-                <div className="col-span-2 bg-gradient-to-br from-carbon to-obsidian border border-crimson/30 shadow-[0_0_30px_rgba(204,0,0,0.1)] rounded-2xl p-6 flex flex-col relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 text-crimson/20">{SpecIcons.size}</div>
-                  <span className={`text-[10px] uppercase tracking-widest text-ash/70 mb-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{heroSpecs.size.key.replace(/_/g, ' ')}</span>
-                  <span className="font-cinzel text-3xl md:text-4xl text-white font-bold tracking-wider">{heroSpecs.size.value}</span>
-                </div>
-              )}
-
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {heroSpecs.traction && (
                 <div className="bg-carbon/40 backdrop-blur-md border border-white/10 rounded-2xl p-5 flex flex-col hover:bg-carbon transition-colors">
                   <div className="text-ash mb-3">{SpecIcons.traction}</div>
@@ -172,13 +147,13 @@ export default function TireDetailsPage() {
             </div>
           </div>
 
-          {/* 2. REMAINING SPECS */}
+          {/* 2. REMAINING SPECS (ALL SIZES GO HERE NOW) */}
           {remainingSpecs.length > 0 && (
             <div className="mb-12">
               <h3 className={`text-[10px] uppercase tracking-[0.2em] text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>Additional Details</h3>
-              <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-4 snap-x">
+              <div className="flex flex-wrap gap-3 pb-4">
                 {remainingSpecs.map(([key, value]) => (
-                  <div key={key} className="flex-none w-40 bg-obsidian border border-white/5 rounded-xl p-4 snap-start flex flex-col justify-between min-h-[90px]">
+                  <div key={key} className="flex-auto min-w-[140px] bg-obsidian border border-white/5 rounded-xl p-4 flex flex-col justify-between min-h-[90px]">
                     <span className={`text-[9px] uppercase tracking-wider text-ash/60 line-clamp-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>
                       {key.replace(/_/g, ' ')}
                     </span>
@@ -189,7 +164,7 @@ export default function TireDetailsPage() {
             </div>
           )}
 
-          {/* ================= ACTION BUTTON ================= */}
+          {/* ACTION BUTTON */}
           <div className="mt-auto pt-8 border-t border-white/10">
             <button onClick={() => router.push(`/order/vehicle?tire_id=${tire.id}`)} className={`w-full bg-white text-obsidian px-12 py-5 rounded-2xl uppercase tracking-[0.15em] text-xs font-bold hover:bg-crimson hover:text-white transition-all duration-500 shadow-[0_10px_30px_rgba(255,255,255,0.1)] flex items-center justify-center gap-4 group ${lang === 'ar' ? 'font-cairo tracking-normal' : ''}`}>
               {t("tire.order_now")}
