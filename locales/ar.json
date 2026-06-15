@@ -107,4 +107,43 @@
     "login_link": "تسجيل الدخول",
     "pass_mismatch": "كلمات المرور غير متطابقة."
   }
+  "tire": {
+    "no_image": "لا توجد صورة",
+    "specifications": "المواصفات الفنية",
+    "spec_notice": "سيتم مطابقة الأبعاد وتفاصيل الإطار بمركبتك بدقة في الخطوة التالية.",
+    "homologated_for": "معتمد من قبل (OEM)",
+    "order_now": "المتابعة لاختيار المركبة",
+    "step_1": "الخطوة 1 من 2"
+  },
+  "specs": {
+    "traction": "التماسك (Traction)",
+    "temperature": "الحرارة (Temperature)",
+    "treadwear": "معدل التآكل (Treadwear)",
+    "speed_rating": "مؤشر السرعة",
+    "load_index": "مؤشر الحمولة",
+    "run_flat": "مقاومة الانثقاب (Run Flat)",
+    "season": "الموسم",
+    "warranty": "الضمان"
+  },
+  "order": {
+    "no_image": "لا توجد صورة",
+    "selected_vehicle": "المركبة المحددة",
+    "step_1_title": "1. حدد مركبتك",
+    "edit": "تعديل",
+    "smart_search": "بحث ذكي",
+    "manual_select": "اختيار يدوي",
+    "search_placeholder": "مثال: كامري 2023، بي إم دبليو X5...",
+    "select_brand": "اختر العلامة التجارية",
+    "select_model": "اختر الموديل",
+    "step_2_title": "2. المقاسات والتفاصيل",
+    "special_notes": "ملاحظات إضافية (اختياري)",
+    "notes_placeholder": "اكتب أي طلبات خاصة، استفسارات عن المقاسات، الخ...",
+    "continue_review": "المتابعة للمراجعة",
+    "step_3_title": "3. إتمام الطلب",
+    "wa_btn": "الطلب عبر واتساب",
+    "processing": "جاري المعالجة...",
+    "submit_dashboard": "إرسال إلى حسابي",
+    "login_submit": "تسجيل الدخول والإرسال",
+    "concierge_notice": "سيقوم فريق الدعم لدينا بمراجعة مطابقة المقاسات لمركبتك قبل اعتماد الطلب النهائي."
+  }
 }

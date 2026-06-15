@@ -107,4 +107,43 @@
     "login_link": "Authenticate",
     "pass_mismatch": "Passwords do not match."
   }
+  "tire": {
+    "no_image": "No Image Available",
+    "specifications": "Technical Specifications",
+    "spec_notice": "Specific dimensions and compound details will be matched to your vehicle in the next step.",
+    "homologated_for": "OEM Approved For",
+    "order_now": "Continue to Vehicle Selection",
+    "step_1": "Step 1 of 2"
+  },
+  "specs": {
+    "traction": "Traction",
+    "temperature": "Temperature",
+    "treadwear": "Treadwear",
+    "speed_rating": "Speed Rating",
+    "load_index": "Load Index",
+    "run_flat": "Run Flat",
+    "season": "Season",
+    "warranty": "Warranty"
+  },
+  "order": {
+    "no_image": "NO IMAGE",
+    "selected_vehicle": "Selected Vehicle",
+    "step_1_title": "1. Identify Your Vehicle",
+    "edit": "Edit",
+    "smart_search": "Smart Search",
+    "manual_select": "Manual Select",
+    "search_placeholder": "e.g. Camry 2023, BMW X5...",
+    "select_brand": "Select Brand",
+    "select_model": "Select Model",
+    "step_2_title": "2. Fitment & Details",
+    "special_notes": "Special Notes (Optional)",
+    "notes_placeholder": "Enter any specific requests, questions about sizing, etc.",
+    "continue_review": "Continue to Review",
+    "step_3_title": "3. Finalize Order",
+    "wa_btn": "Order via WhatsApp",
+    "processing": "Processing...",
+    "submit_dashboard": "Submit to Dashboard",
+    "login_submit": "Login & Submit",
+    "concierge_notice": "Our concierge team will verify your vehicle's OEM fitment before finalizing the order."
+  }
 }
