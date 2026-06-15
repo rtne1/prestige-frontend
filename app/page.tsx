@@ -67,10 +67,10 @@ export default function Home() {
         <div className="relative z-10 w-full max-w-4xl mx-auto px-6 text-center animate-[fadeInUp_0.8s_forwards]">
           <h1 className={`font-cinzel text-4xl md:text-6xl lg:text-7xl mb-6 leading-tight text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : 'tracking-wide'}`}>
             {/* Fallback to raw text if translation keys don't exist yet */}
-            {t("home.search_title") !== "home.search_title" ? t("home.search_title") : "FIND YOUR PERFECT TIRE"}
+            {t("home.search_title")}
           </h1>
           <p className={`text-ash text-sm md:text-base font-light mb-12 max-w-2xl mx-auto ${lang === 'ar' ? 'font-cairo' : ''}`}>
-            {t("home.search_subtitle") !== "home.search_subtitle" ? t("home.search_subtitle") : "Search by size, brand, or model to discover our exclusive collection of premium performance tires."}
+            {t("home.search_subtitle")}
           </p>
 
           {/* SMART SEARCH BAR */}
@@ -80,7 +80,7 @@ export default function Home() {
             </svg>
             <input 
               type="text" 
-              placeholder={t("home.search_placeholder") !== "home.search_placeholder" ? t("home.search_placeholder") : "e.g., Michelin Pilot Sport, 285/35R22, Pirelli..."}
+              placeholder={t("home.search_placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full bg-carbon/80 backdrop-blur-xl border border-white/10 rounded-full py-5 md:py-6 text-base md:text-lg text-white outline-none focus:border-crimson focus:bg-carbon transition-all duration-500 ${lang === 'ar' ? 'pr-16 pl-6 font-cairo' : 'pl-16 pr-6'}`}
@@ -98,7 +98,7 @@ export default function Home() {
       <section className="relative z-10 w-full max-w-[1600px] mx-auto px-6 md:px-12 pb-32 min-h-[50vh]">
         {tires.length === 0 && !isLoading ? (
           <div className="text-center py-20 text-ash">
-            <p className="text-lg">No tires found matching your criteria.</p>
+            <p className="text-lg">{t("home.no_results")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-[fadeInUp_0.8s_ease-out]">
@@ -135,7 +135,7 @@ export default function Home() {
                     
                     <div className="mt-auto pt-4 flex justify-between items-center border-t border-white/5">
                       <span className="text-xs text-white/50 group-hover:text-white transition-colors">
-                        View Details
+                        {t("home.view_details")}
                       </span>
                       <svg className={`w-4 h-4 text-ash group-hover:text-crimson transition-all group-hover:translate-x-1 ${lang === 'ar' ? 'rtl:-scale-x-100 group-hover:-translate-x-1' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                     </div>

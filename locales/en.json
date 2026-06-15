@@ -14,7 +14,12 @@
     "enter_studio": "Start Selection",
     "scroll": "Scroll",
     "select_marque": "Select Brand",
-    "choose_mfg": "Choose your vehicle brand to find the perfect tires."
+    "choose_mfg": "Choose your vehicle brand to find the perfect tires.",
+    "search_title": "FIND YOUR PERFECT TIRE",
+    "search_subtitle": "Search by size, brand, or model to discover our exclusive collection of premium performance tires.",
+    "search_placeholder": "e.g., Michelin Pilot Sport, 285/35R22, Pirelli...",
+    "no_results": "No tires found matching your criteria.",
+    "view_details": "View Details"
   },
   "configurator": {
     "the_studio": "TIRE SELECTION",
