@@ -1,0 +1,52 @@
+prestige-frontend
+├── app
+│   ├── account
+│   │   └── page.tsx
+│   ├── auth
+│   │   ├── register
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── configurator
+│   │   └── page.tsx
+│   ├── contact
+│   │   └── page.tsx
+│   ├── garage
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── fonts.ts
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components
+│   ├── layout
+│   │   ├── Footer.tsx
+│   │   └── Navbar.tsx
+│   └── ui
+│       ├── Button.tsx
+│       ├── ChatWidget.tsx
+│       ├── CustomCursor.tsx
+│       ├── Input.tsx
+│       ├── RequestCard.tsx
+│       ├── Select.tsx
+│       ├── StatusBadge.tsx
+│       └── VehicleCard.tsx
+├── contexts
+│   ├── AuthContext.tsx
+│   └── LanguageContext.tsx
+├── lib
+│   └── api.ts
+├── locales
+│   ├── ar.json
+│   └── en.json
+├── public
+│   └── fonts
+│       └── bahij-janna.woff2
+├── .env.local
+├── .gitattributes
+├── Extraction file.py
+├── next.config.mjs
+├── package.json
+├── postcss.config.js
+├── tailwind.config.ts
+└── tsconfig.json

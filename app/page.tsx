@@ -5,95 +5,140 @@ import Link from "next/link";
 import api from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-interface Brand { id: number; name: string; media: { file_path: string } | null; }
+interface TireCompound {
+  id: number;
+  model_name: string;
+  specs: any;
+  brand: { name: string };
+  media: { file_path: string } | null;
+}
 
 export default function Home() {
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const { t, lang } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [tires, setTires] = useState<TireCompound[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Initial load: fetch some popular/recent tires to display before they even search
   useEffect(() => {
-    api.get("/vehicles/brands").then((res) => setBrands(res.data.data)).catch(console.error);
+    fetchTires("");
+  }, []);
 
-    observerRef.current = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("opacity-100", "translate-y-0");
-          entry.target.classList.remove("opacity-0", "translate-y-10");
-        }
-      });
-    }, { threshold: 0.1 });
+  // Smart Search: Debounce typing so we don't spam the API on every single keystroke
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    
+    setIsLoading(true);
+    searchTimeoutRef.current = setTimeout(() => {
+      fetchTires(searchQuery);
+    }, 400); // 400ms delay
 
-    document.querySelectorAll(".reveal-on-scroll").forEach((el) => observerRef.current?.observe(el));
-    return () => observerRef.current?.disconnect();
-  }, [brands.length]);
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [searchQuery]);
+
+  const fetchTires = async (query: string) => {
+    try {
+      const res = await api.get(`/compounds?search=${encodeURIComponent(query)}`);
+      setTires(res.data.data);
+    } catch (error) {
+      console.error("Failed to search tires:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-obsidian">
+    <div className="flex flex-col min-h-screen bg-obsidian text-white">
       
-      {/* CINEMATIC HERO SECTION */}
-      <section className="relative h-screen flex flex-col justify-center overflow-hidden">
+      {/* CINEMATIC HERO & SMART SEARCH SECTION */}
+      <section className="relative min-h-[80vh] flex flex-col justify-center items-center overflow-hidden pt-24 pb-12">
         <div className="absolute inset-0 z-0">
-          <img src="https://images.unsplash.com/photo-1614200187524-dc4b892acf16?q=80&w=2000&auto=format&fit=crop" alt="Luxury Car Background" className="w-full h-full object-cover opacity-50 animate-[slowZoom_20s_infinite_alternate_linear]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-obsidian/80"></div>
+          <img 
+            src="https://images.unsplash.com/photo-1614200187524-dc4b892acf16?q=80&w=2000&auto=format&fit=crop" 
+            alt="Luxury Car Background" 
+            className="w-full h-full object-cover opacity-30 animate-[slowZoom_20s_infinite_alternate_linear]" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-obsidian/80 via-obsidian/60 to-obsidian"></div>
         </div>
         
-        <div className="relative z-10 px-6 md:px-16 lg:px-24 w-full max-w-[1600px] mx-auto mt-20 pointer-events-none">
-          <span className={`block text-ash tracking-[0.3em] text-[10px] md:text-xs font-semibold uppercase mb-6 opacity-0 animate-[fadeInUp_1s_forwards] ${lang === 'ar' ? 'font-cairo' : ''}`}>
-            {t("home.subtitle")}
-          </span>
-          <h1 className={`font-cinzel text-5xl md:text-7xl lg:text-[7rem] leading-[1.1] mb-12 opacity-0 animate-[fadeInUp_1s_0.2s_forwards] text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : 'tracking-wide'}`}>
-            {t("home.title_1")}<br/>
-            {t("home.title_2")}
+        <div className="relative z-10 w-full max-w-4xl mx-auto px-6 text-center animate-[fadeInUp_0.8s_forwards]">
+          <h1 className={`font-cinzel text-4xl md:text-6xl lg:text-7xl mb-6 leading-tight text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : 'tracking-wide'}`}>
+            {/* Fallback to raw text if translation keys don't exist yet */}
+            {t("home.search_title") !== "home.search_title" ? t("home.search_title") : "FIND YOUR PERFECT TIRE"}
           </h1>
-          
-          {/* THE FIX: pointer-events-auto ensures the button is strictly clickable above the background! */}
-          <div className="opacity-0 animate-[fadeInUp_1s_0.4s_forwards] pointer-events-auto">
-            <Link href="/configurator" className="inline-block bg-white text-obsidian px-10 py-5 uppercase tracking-[0.2em] text-xs font-semibold hover:bg-crimson hover:text-white transition-all duration-500 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-              {t("home.enter_studio")}
-            </Link>
-          </div>
-        </div>
+          <p className={`text-ash text-sm md:text-base font-light mb-12 max-w-2xl mx-auto ${lang === 'ar' ? 'font-cairo' : ''}`}>
+            {t("home.search_subtitle") !== "home.search_subtitle" ? t("home.search_subtitle") : "Search by size, brand, or model to discover our exclusive collection of premium performance tires."}
+          </p>
 
-        <div className="absolute bottom-10 left-6 md:left-16 lg:left-24 flex items-center gap-4 opacity-0 animate-[fadeInUp_1s_0.8s_forwards]">
-          <div className="w-12 h-[1px] bg-white/50"></div>
-          <span className="text-[10px] uppercase tracking-widest text-ash">{t("home.scroll")}</span>
+          {/* SMART SEARCH BAR */}
+          <div className="relative w-full max-w-3xl mx-auto shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+            <svg className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 text-ash transition-colors duration-300 ${lang === 'ar' ? 'right-6' : 'left-6'} ${searchQuery ? 'text-crimson' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input 
+              type="text" 
+              placeholder={t("home.search_placeholder") !== "home.search_placeholder" ? t("home.search_placeholder") : "e.g., Michelin Pilot Sport, 285/35R22, Pirelli..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`w-full bg-carbon/80 backdrop-blur-xl border border-white/10 rounded-full py-5 md:py-6 text-base md:text-lg text-white outline-none focus:border-crimson focus:bg-carbon transition-all duration-500 ${lang === 'ar' ? 'pr-16 pl-6 font-cairo' : 'pl-16 pr-6'}`}
+            />
+            {isLoading && (
+              <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'}`}>
+                <div className="w-5 h-5 border-2 border-glass border-t-crimson rounded-full animate-spin"></div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* EDITORIAL MARQUE GRID */}
-      <section id="studio" className="py-24 md:py-40 px-6 md:px-12 max-w-[1600px] mx-auto w-full relative z-10">
-        <div className="flex flex-col justify-start items-start mb-12 md:mb-20 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-luxury text-start w-full">
-          <div className="w-full text-start">
-            <h2 className={`font-cinzel text-3xl md:text-5xl mb-4 text-white ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("home.select_marque")}</h2>
-            <p className={`text-ash font-light text-sm md:text-base tracking-wide ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("home.choose_mfg")}</p>
-          </div>
-        </div>
-
-        {brands.length === 0 ? (
-          <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-glass border-t-crimson rounded-full animate-spin" />
+      {/* SEARCH RESULTS GRID */}
+      <section className="relative z-10 w-full max-w-[1600px] mx-auto px-6 md:px-12 pb-32 min-h-[50vh]">
+        {tires.length === 0 && !isLoading ? (
+          <div className="text-center py-20 text-ash">
+            <p className="text-lg">No tires found matching your criteria.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 delay-200 ease-luxury">
-            {brands.map((brand) => {
-              const imageUrl = brand.media?.file_path 
-                ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${brand.media.file_path}`
-                : "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=1000&auto=format&fit=crop";
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-[fadeInUp_0.8s_ease-out]">
+            {tires.map((tire) => {
+              const imageUrl = tire.media?.file_path 
+                ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${tire.media.file_path}`
+                : null; // Fallback handled by CSS/Design
 
               return (
                 <Link 
-                  href={`/configurator?brand_id=${brand.id}`} 
-                  key={brand.id}
-                  className="group relative h-[250px] md:h-[400px] w-full bg-carbon overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-500 block"
+                  href={`/tire/${tire.id}`} 
+                  key={tire.id}
+                  className="group relative flex flex-col bg-carbon/40 border border-white/5 hover:border-crimson/50 rounded-2xl overflow-hidden transition-all duration-500 ease-luxury hover:shadow-[0_10px_40px_rgba(204,0,0,0.15)] hover:-translate-y-2"
                 >
-                  <img src={imageUrl} alt={brand.name} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-80 group-hover:scale-105 transition-all duration-[1.5s] ease-luxury" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent"></div>
+                  <div className="relative h-[250px] w-full p-8 flex items-center justify-center bg-gradient-to-b from-white/[0.02] to-transparent">
+                    {imageUrl ? (
+                      <img 
+                        src={imageUrl} 
+                        alt={tire.model_name} 
+                        className="max-h-full max-w-full object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.8)] transition-transform duration-700 group-hover:scale-110" 
+                      />
+                    ) : (
+                      <div className="text-ash/30 text-xs tracking-widest uppercase">No Image</div>
+                    )}
+                    {/* Decorative glow */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-crimson/0 group-hover:bg-crimson/20 blur-3xl rounded-full transition-all duration-700 z-0 pointer-events-none"></div>
+                  </div>
                   
-                  <div className="absolute bottom-6 md:bottom-8 left-0 w-full text-center z-10 px-4">
-                    <span className={`font-cinzel text-2xl md:text-3xl tracking-[0.2em] text-white group-hover:text-crimson transition-colors duration-500 ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
-                      {brand.name.toUpperCase()}
-                    </span>
+                  <div className="p-6 border-t border-white/5 flex flex-col flex-1 bg-obsidian z-10">
+                    <span className="text-[10px] uppercase tracking-widest text-ash mb-2">{tire.brand.name}</span>
+                    <h3 className={`font-cinzel text-xl text-white leading-tight mb-4 group-hover:text-crimson transition-colors ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>
+                      {tire.model_name}
+                    </h3>
+                    
+                    <div className="mt-auto pt-4 flex justify-between items-center border-t border-white/5">
+                      <span className="text-xs text-white/50 group-hover:text-white transition-colors">
+                        View Details
+                      </span>
+                      <svg className={`w-4 h-4 text-ash group-hover:text-crimson transition-all group-hover:translate-x-1 ${lang === 'ar' ? 'rtl:-scale-x-100 group-hover:-translate-x-1' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                    </div>
                   </div>
                 </Link>
               );
@@ -101,6 +146,7 @@ export default function Home() {
           </div>
         )}
       </section>
+      
     </div>
   );
 }
