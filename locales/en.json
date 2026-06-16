@@ -113,7 +113,8 @@
     "spec_notice": "Specific dimensions and compound details will be matched to your vehicle in the next step.",
     "homologated_for": "OEM Approved For",
     "order_now": "Continue to Vehicle Selection",
-    "step_1": "Step 1 of 2"
+    "step_1": "Step 1 of 2",
+    "additional_details": "Additional Details"
   },
   "specs": {
     "traction": "Traction",
@@ -144,6 +145,7 @@
     "processing": "Processing...",
     "submit_dashboard": "Submit to Dashboard",
     "login_submit": "Login & Submit",
-    "concierge_notice": "Our concierge team will verify your vehicle's OEM fitment before finalizing the order."
+    "concierge_notice": "Our concierge team will verify your vehicle's OEM fitment before finalizing the order.",
+    "specs_verification": "Specifications will be verified by our concierge."
   }
 }

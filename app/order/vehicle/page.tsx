@@ -174,9 +174,11 @@ function OrderVehicleContent() {
                     </div>
                   );
                 })
-              ) : (
-                <div className="col-span-2 text-xs text-ash/50 font-light">Specifications will be verified by concierge.</div>
-              )}
+                ) : (
+                <div className={`col-span-2 text-xs text-ash/50 font-light ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                    {t("order.specs_verification")}
+                </div>
+                )}
             </div>
           </div>
         </div>

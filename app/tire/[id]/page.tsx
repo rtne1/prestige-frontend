@@ -187,7 +187,9 @@ export default function TireDetailsPage() {
           {/* 2. REMAINING SPECS */}
           {remainingSpecs.length > 0 && (
             <div className="mb-12">
-              <h3 className={`text-[10px] uppercase tracking-[0.2em] text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>Additional Details</h3>
+              <h3 className={`text-[10px] uppercase tracking-[0.2em] text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                {t("tire.additional_details")}
+              </h3>
               <div className="flex flex-wrap gap-3 pb-4">
                 {remainingSpecs.map(([key, value]) => (
                   <div key={key} className="flex-auto min-w-[140px] bg-obsidian border border-white/5 rounded-xl p-4 flex flex-col justify-between min-h-[90px]">
