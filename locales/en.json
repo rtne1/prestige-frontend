@@ -54,7 +54,9 @@
     "wa_greeting": "Hello Mr. Tires Support,\n\nI would like to request tires for my vehicle.",
     "wa_tire": "*Tire:*",
     "wa_front": "*Front:*",
-    "wa_rear": "*Rear:*"
+    "wa_rear": "*Rear:*",
+    "select_manufacturer": "Select Manufacturer",
+    "oem_mark_title": "OEM Homologation (Optional)"
   },
   "chat": {
     "title": "Mr. Tires Support",
