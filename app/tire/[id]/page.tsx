@@ -11,6 +11,7 @@ interface TireCompound {
   specs: any;
   brand: { name: string; media_id: number | null };
   media: { file_path: string } | null;
+  gallery: Array<{ id: number; file_path: string }>; // NEW: Gallery Array
   homologatedBrands: Array<{ id: number; name: string }>;
 }
 
@@ -27,6 +28,9 @@ export default function TireDetailsPage() {
   
   const [tire, setTire] = useState<TireCompound | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // NEW: State to manage the currently active image
+  const [activeImagePath, setActiveImagePath] = useState<string | null>(null);
 
   useEffect(() => {
     if (!params.id) return;
@@ -34,6 +38,13 @@ export default function TireDetailsPage() {
       try {
         const res = await api.get(`/compounds/${params.id}?fresh=${new Date().getTime()}`);
         setTire(res.data.data);
+        
+        // Set the initial image when loaded
+        if (res.data.data.media?.file_path) {
+          setActiveImagePath(res.data.data.media.file_path);
+        } else if (res.data.data.gallery && res.data.data.gallery.length > 0) {
+          setActiveImagePath(res.data.data.gallery[0].file_path);
+        }
       } catch (error) {
         console.error("Failed to fetch tire details:", error);
         router.push("/");
@@ -54,15 +65,23 @@ export default function TireDetailsPage() {
 
   if (!tire) return null;
 
-  const imageUrl = tire.media?.file_path 
-    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${tire.media.file_path}`
-    : null;
+  // Compile all images into one array for the gallery
+  const allImages: string[] = [];
+  if (tire.media?.file_path) allImages.push(tire.media.file_path);
+  if (tire.gallery) {
+    tire.gallery.forEach(img => {
+      if (img.file_path && !allImages.includes(img.file_path)) {
+        allImages.push(img.file_path);
+      }
+    });
+  }
 
-  // --- BULLETPROOF DATA EXTRACTION ---
+  const activeImageUrl = activeImagePath ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${activeImagePath}` : null;
+
+  // Extract Specs
   let specs: Record<string, any> = {};
-  
   if (typeof tire.specs === 'string') {
-    try { specs = JSON.parse(tire.specs); } catch (e) { console.error("Specs is invalid JSON string"); }
+    try { specs = JSON.parse(tire.specs); } catch (e) {}
   } else if (typeof tire.specs === 'object' && tire.specs !== null) {
     specs = tire.specs;
   }
@@ -72,14 +91,12 @@ export default function TireDetailsPage() {
     return foundKey ? { key: foundKey, value: specs[foundKey] } : null;
   };
 
-  // ONLY highlighting Traction, Speed, and Load in the main cards now. Size is removed from here!
   const heroSpecs = {
     traction: findSpec(['traction', 'تماسك', 'grip']),
     speed: findSpec(['speed', 'سرعة', 'rating']),
     load: findSpec(['load', 'حمولة', 'index', 'weight']),
   };
 
-  // Everything else (INCLUDING YOUR SIZES) will naturally flow into Additional Details
   const remainingSpecs = Object.entries(specs).filter(([key]) => 
     !Object.values(heroSpecs).some(hs => hs?.key === key)
   );
@@ -90,23 +107,43 @@ export default function TireDetailsPage() {
 
       <div className="max-w-[1400px] mx-auto w-full px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 relative z-10">
         
-        {/* LEFT COLUMN */}
+        {/* LEFT COLUMN: IMAGE GALLERY */}
         <div className="flex flex-col items-center justify-start lg:sticky lg:top-32 h-fit animate-[fadeInUp_0.6s_ease-out]">
           <div className="w-full text-center lg:text-start mb-8 lg:hidden">
             <span className="text-[10px] uppercase tracking-[0.3em] text-crimson font-bold mb-2 block">{tire.brand.name}</span>
             <h1 className={`font-cinzel text-4xl text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{tire.model_name}</h1>
           </div>
-          <div className="relative w-full max-w-[500px] aspect-square bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-carbon to-obsidian border border-white/10 rounded-[2rem] md:rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.5)] overflow-hidden flex items-center justify-center p-8 group">
-            {imageUrl ? (
-              <img src={imageUrl} alt={tire.model_name} className="max-h-full max-w-full object-contain drop-shadow-[0_40px_40px_rgba(0,0,0,0.8)] transition-transform duration-[2s] ease-luxury group-hover:scale-110 relative z-10" />
+          
+          {/* Main Large Image */}
+          <div className="relative w-full max-w-[500px] aspect-square bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-carbon to-obsidian border border-white/10 rounded-[2rem] md:rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.5)] overflow-hidden flex items-center justify-center p-8 group transition-all duration-500">
+            {activeImageUrl ? (
+              <img src={activeImageUrl} alt={tire.model_name} className="max-h-full max-w-full object-contain drop-shadow-[0_40px_40px_rgba(0,0,0,0.8)] transition-transform duration-[2s] ease-luxury group-hover:scale-110 relative z-10" />
             ) : (
               <span className="text-ash/30 tracking-widest uppercase text-sm font-semibold">{t("tire.no_image")}</span>
             )}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-crimson/10 group-hover:bg-crimson/20 blur-[80px] rounded-full transition-colors duration-700 pointer-events-none"></div>
           </div>
+
+          {/* Thumbnail Strip */}
+          {allImages.length > 1 && (
+            <div className="flex gap-4 mt-6 w-full max-w-[500px] overflow-x-auto hide-scrollbar pb-2 px-2">
+              {allImages.map((imgPath, idx) => {
+                const isActive = activeImagePath === imgPath;
+                return (
+                  <button 
+                    key={idx} 
+                    onClick={() => setActiveImagePath(imgPath)}
+                    className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl flex-shrink-0 bg-carbon overflow-hidden transition-all duration-300 border-2 ${isActive ? 'border-crimson shadow-[0_0_20px_rgba(204,0,0,0.3)]' : 'border-white/5 hover:border-white/20'}`}
+                  >
+                    <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${imgPath}`} className="w-full h-full object-contain p-3" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* RIGHT COLUMN */}
+        {/* RIGHT COLUMN: SPECS */}
         <div className="flex flex-col justify-start animate-[fadeInUp_0.8s_ease-out]">
           
           <div className="hidden lg:block mb-10 border-b border-white/10 pb-8 text-start">
@@ -114,7 +151,7 @@ export default function TireDetailsPage() {
             <h1 className={`font-cinzel text-5xl xl:text-6xl text-white leading-tight drop-shadow-lg ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{tire.model_name}</h1>
           </div>
 
-          {/* 1. HERO SPECS (Only Traction, Speed, Load) */}
+          {/* 1. HERO SPECS */}
           <div className="mb-12">
             <h3 className={`text-[10px] uppercase tracking-[0.2em] text-ash mb-6 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>
               {t("tire.specifications")}
@@ -147,7 +184,7 @@ export default function TireDetailsPage() {
             </div>
           </div>
 
-          {/* 2. REMAINING SPECS (ALL SIZES GO HERE NOW) */}
+          {/* 2. REMAINING SPECS */}
           {remainingSpecs.length > 0 && (
             <div className="mb-12">
               <h3 className={`text-[10px] uppercase tracking-[0.2em] text-ash mb-4 px-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>Additional Details</h3>
