@@ -36,6 +36,8 @@ function ConfiguratorContent() {
   
   const [selectedTireBrand, setSelectedTireBrand] = useState<string | null>(null);
   const [selectedCompound, setSelectedCompound] = useState<Compound | null>(null);
+  
+  const [selectedOem, setSelectedOem] = useState<string>(""); // NEW: OEM Selection
   const [tireQty, setTireQty] = useState<string>("");
   const [notes, setNotes] = useState("");
 
@@ -47,6 +49,17 @@ function ConfiguratorContent() {
     { id: "rear_2", label: t("configurator.qty_rear_2") },
     { id: "front_1", label: t("configurator.qty_front_1") },
     { id: "rear_1", label: t("configurator.qty_rear_1") },
+  ];
+
+  const oemOptions = [
+    { id: "AO", label: "AO (Audi)" },
+    { id: "MO", label: "MO (Mercedes)" },
+    { id: "N", label: "N0 / N1 (Porsche)" },
+    { id: "BMW", label: "★ (BMW)" },
+    { id: "L", label: "L (Lamborghini)" },
+    { id: "K", label: "K1 / K2 (Ferrari)" },
+    { id: "AM", label: "AM (Aston Martin)" },
+    { id: "J", label: "J (Jaguar)" },
   ];
 
   useEffect(() => {
@@ -63,7 +76,7 @@ function ConfiguratorContent() {
 
   const handleModelClick = (m: Model) => {
     if (selectedModel?.id !== m.id) {
-      setSelectedYear(null); setOemSpec(null); setSelectedTireBrand(null); setSelectedCompound(null); setTireQty("");
+      setSelectedYear(null); setOemSpec(null); setSelectedTireBrand(null); setSelectedCompound(null); setTireQty(""); setSelectedOem("");
     }
     setSelectedModel(m);
     setIsDrawerOpen(true);
@@ -71,14 +84,14 @@ function ConfiguratorContent() {
   };
 
   const handleYearClick = (y: Year) => {
-    setSelectedYear(y); setSelectedTireBrand(null); setSelectedCompound(null); setTireQty("");
+    setSelectedYear(y); setSelectedTireBrand(null); setSelectedCompound(null); setTireQty(""); setSelectedOem("");
     api.get(`/vehicles/years/${y.id}/oem-specs`).then(res => {
       setOemSpec(res.data.data || { f_width: 0, f_profile: 0, f_rim: 0, r_width: 0, r_profile: 0, r_rim: 0 });
     });
   };
 
   const handleTireBrandClick = (brandName: string) => {
-    setSelectedTireBrand(brandName); setSelectedCompound(null); setTireQty("");
+    setSelectedTireBrand(brandName); setSelectedCompound(null); setTireQty(""); setSelectedOem("");
   };
 
   const handleCompoundClick = (c: Compound) => {
@@ -91,7 +104,12 @@ function ConfiguratorContent() {
   const handleWhatsApp = () => {
     if (!selectedModel || !selectedYear || !selectedCompound || !oemSpec || !tireQty) return;
     const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
-    const text = `${t("configurator.wa_greeting")}\n\n*${t("configurator.vehicle")}:* ${selectedYear.year} ${selectedBrand?.name} ${selectedModel.name}\n*${t("configurator.wa_tire")}:* ${selectedCompound.brand.name} ${selectedCompound.model_name}\n*${t("configurator.wa_front")}:* ${oemSpec.f_width}/${oemSpec.f_profile} R${oemSpec.f_rim}\n*${t("configurator.wa_rear")}:* ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.r_rim}\n*${t("configurator.qty_label")}:* ${qtyLabel}`;
+    
+    let text = `${t("configurator.wa_greeting")}\n\n*${t("configurator.vehicle")}:* ${selectedYear.year} ${selectedBrand?.name} ${selectedModel.name}\n*${t("configurator.wa_tire")}:* ${selectedCompound.brand.name} ${selectedCompound.model_name}\n*${t("configurator.wa_front")}:* ${oemSpec.f_width}/${oemSpec.f_profile} R${oemSpec.f_rim}\n*${t("configurator.wa_rear")}:* ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.r_rim}\n*${t("configurator.qty_label")}:* ${qtyLabel}`;
+    
+    if (selectedOem) text += `\n*OEM Mark:* ${selectedOem}`;
+    if (notes) text += `\n*Notes:* ${notes}`;
+
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -99,7 +117,9 @@ function ConfiguratorContent() {
     setIsSubmitting(true);
     try {
       const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
-      const combinedNotes = `[${t("configurator.qty_label")}: ${qtyLabel}]\n${notes}`.trim();
+      let combinedNotes = `[${t("configurator.qty_label")}: ${qtyLabel}]`;
+      if (selectedOem) combinedNotes += `\n[OEM Preference: ${selectedOem}]`;
+      if (notes) combinedNotes += `\n\n${notes}`;
 
       const vehRes = await api.post("/garage/vehicles", { vehicle_year_id: selectedYear?.id, nickname: null });
       await api.post("/garage/requests", {
@@ -110,13 +130,14 @@ function ConfiguratorContent() {
       });
       router.push("/garage");
     } catch (error) {
-      alert("Server Error."); setIsSubmitting(false);
+      alert("Server Error. Please try again."); setIsSubmitting(false);
     }
   };
 
   const handleAuthorize = () => {
     if (!user) {
-      const configData = { selectedYear: selectedYear?.id, selectedCompound: selectedCompound?.id, dimensions: oemSpec, notes };
+      let combinedNotes = `[OEM Preference: ${selectedOem}]\n${notes}`;
+      const configData = { selectedYear: selectedYear?.id, selectedCompound: selectedCompound?.id, dimensions: oemSpec, notes: combinedNotes };
       localStorage.setItem("pending_config", JSON.stringify(configData));
       router.push("/auth");
     } else submitToVault();
@@ -129,20 +150,51 @@ function ConfiguratorContent() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-obsidian text-white overflow-hidden pt-[80px] md:pt-[100px]">
       
+      {/* ========================================================
+          NEW: ULTRA-PREMIUM MANUFACTURER SELECTION GRID
+      ======================================================== */}
       {phase === "gallery" && !selectedBrand && (
-        <div className="flex-1 w-full flex flex-col items-center justify-center p-6 animate-[fadeInUp_0.4s_ease-out]">
-          <h1 className={`font-cinzel text-3xl md:text-5xl text-white mb-10 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>Select Manufacturer</h1>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full max-w-6xl">
+        <div className="flex-1 w-full flex flex-col items-center justify-start pt-10 md:pt-20 px-6 pb-20 overflow-y-auto hide-scrollbar animate-[fadeInUp_0.4s_ease-out]">
+          <div className="text-center mb-16">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-crimson font-bold mb-3 block">Step 1</span>
+            <h1 className={`font-cinzel text-4xl md:text-5xl lg:text-6xl text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : 'tracking-wide'}`}>
+              Select Manufacturer
+            </h1>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-[1400px]">
             {brands.map(b => (
-              <button key={b.id} onClick={() => handleBrandClick(b)} className="bg-carbon/60 border border-white/5 hover:border-crimson rounded-2xl p-6 flex flex-col items-center transition-all duration-300 hover:shadow-[0_0_20px_rgba(204,0,0,0.2)]">
-                {b.media?.file_path ? <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${b.media.file_path}`} alt={b.name} className="h-12 object-contain mb-4 filter drop-shadow-md invert" /> : <div className="h-12 w-12 bg-white/10 rounded-full mb-4"></div>}
-                <span className="text-xs uppercase tracking-widest">{b.name}</span>
+              <button 
+                key={b.id} 
+                onClick={() => handleBrandClick(b)} 
+                className="group relative bg-gradient-to-b from-white/[0.03] to-transparent border border-white/5 hover:border-crimson/50 rounded-[2rem] p-10 flex flex-col items-center justify-center transition-all duration-700 ease-luxury hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(204,0,0,0.15)] overflow-hidden"
+              >
+                {/* Glow Effect */}
+                <div className="absolute inset-0 bg-crimson/0 group-hover:bg-crimson/10 transition-colors duration-700 pointer-events-none blur-3xl"></div>
+                
+                {b.media?.file_path ? (
+                  // FIXED: Removed 'invert' class so original logo colors shine!
+                  <img 
+                    src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${b.media.file_path}`} 
+                    alt={b.name} 
+                    className="h-20 md:h-24 object-contain mb-8 transition-transform duration-700 group-hover:scale-110 relative z-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]" 
+                  />
+                ) : ( 
+                  <div className="h-20 w-20 bg-white/5 rounded-full mb-8 flex items-center justify-center text-ash/30 text-[10px]">NO LOGO</div>
+                )}
+                
+                <span className="text-sm md:text-base font-cinzel font-semibold tracking-[0.2em] uppercase text-ash group-hover:text-white transition-colors duration-300 relative z-10">
+                  {b.name}
+                </span>
               </button>
             ))}
           </div>
         </div>
       )}
 
+      {/* ========================================================
+          MODELS GALLERY (Works exactly as you like it)
+      ======================================================== */}
       {phase === "gallery" && selectedBrand && (
         <div className="flex flex-col h-full animate-[fadeInUp_0.4s_ease-out] relative">
           
@@ -180,6 +232,9 @@ function ConfiguratorContent() {
               </div>
             </div>
 
+            {/* ========================================================
+                THE SIDE DRAWER (Specs, Tires, OEM, Qty)
+            ======================================================== */}
             <div className={`fixed lg:absolute bottom-0 start-0 lg:start-auto lg:end-0 w-full lg:w-[450px] bg-obsidian/95 lg:bg-carbon/95 backdrop-blur-3xl border-t border-white/10 lg:border-t-0 lg:border-s rounded-t-3xl lg:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.5)] lg:shadow-none transition-transform duration-700 ease-luxury z-40 flex flex-col ${isDrawerOpen ? 'translate-y-0 lg:translate-x-0 max-h-[85vh] lg:max-h-full' : 'translate-y-full lg:translate-y-0 lg:translate-x-full rtl:lg:-translate-x-full max-h-[85vh] lg:max-h-full'}`}>
               <div className="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onClick={closeDrawer}>
                 <div className="w-12 h-1.5 bg-white/20 rounded-full"></div>
@@ -258,14 +313,38 @@ function ConfiguratorContent() {
                 <div ref={qtyRef} className="pt-2">
                   {selectedCompound && (
                     <div className="animate-[fadeInUp_0.3s_ease-out] mb-12">
+                      
+                      {/* NEW: OEM HOMOLOGATION SELECTOR */}
+                      <div className="mb-8">
+                        <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.oem_mark_title") || "OEM Homologation"}</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {oemOptions.map(opt => (
+                            <button key={opt.id} onClick={() => setSelectedOem(opt.id === selectedOem ? "" : opt.id)} className={`px-4 py-3 rounded-xl border text-xs transition-all duration-300 ${selectedOem === opt.id ? 'bg-crimson border-crimson text-white shadow-[0_0_20px_rgba(204,0,0,0.3)]' : 'bg-obsidian border-white/10 text-ash hover:border-white hover:text-white'}`}>
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.qty_title")}</h4>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 mb-8">
                         {qtyOptions.map(opt => (
                           <button key={opt.id} onClick={() => setTireQty(opt.id)} className={`px-4 py-3 rounded-xl border text-xs transition-all ${tireQty === opt.id ? 'bg-white border-white text-obsidian font-semibold shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-obsidian md:bg-transparent border-white/20 text-ash hover:border-white hover:text-white'} ${lang === 'ar' ? 'font-cairo' : ''}`}>
                             {opt.label}
                           </button>
                         ))}
                       </div>
+
+                      <div className="mb-2">
+                        <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-3 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.special_notes")}</h4>
+                        <textarea 
+                          className={`w-full bg-carbon border border-white/10 outline-none transition-all text-white p-5 rounded-2xl focus:border-crimson min-h-[100px] resize-none text-sm placeholder:text-ash/30 ${lang === 'ar' ? 'font-cairo' : ''}`} 
+                          placeholder={t("order.notes_placeholder")}
+                          value={notes} 
+                          onChange={(e) => setNotes(e.target.value)} 
+                        />
+                      </div>
+
                     </div>
                   )}
                 </div>
@@ -305,6 +384,12 @@ function ConfiguratorContent() {
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.compound")}</span>
                   <span className="font-medium text-crimson">{selectedCompound?.brand.name} {selectedCompound?.model_name}</span>
                 </div>
+                {selectedOem && (
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
+                    <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.oem_mark_title") || "OEM Mark"}</span>
+                    <span className="font-medium text-white">{selectedOem}</span>
+                  </div>
+                )}
               </div>
             </div>
 
