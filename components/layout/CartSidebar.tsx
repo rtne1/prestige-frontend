@@ -48,7 +48,6 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     setIsSubmitting(true);
     try {
-      // Submit all items in the cart
       for (const item of cart) {
         let vehId = null;
         if (item.vehicle) {
@@ -61,7 +60,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         if (item.notes) combinedNotes += `\n\n${item.notes}`;
 
         await api.post("/garage/requests", {
-          user_vehicle_id: vehId, // Will be null if they ordered without a vehicle
+          user_vehicle_id: vehId,
           compound_id: item.compound.id,
           ...item.vehicle?.oemSpec,
           client_notes: combinedNotes
@@ -80,12 +79,10 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
   return (
     <>
-      {/* Backdrop */}
       {isOpen && (
         <div className="fixed inset-0 bg-obsidian/60 backdrop-blur-sm z-[70] transition-opacity" onClick={onClose} />
       )}
 
-      {/* Sidebar */}
       <div className={`fixed top-0 ${lang === 'ar' ? 'left-0' : 'right-0'} h-full w-full sm:w-[400px] bg-carbon/95 backdrop-blur-3xl border-${lang === 'ar' ? 'r' : 'l'} border-white/10 shadow-2xl z-[80] transform transition-transform duration-500 ease-luxury flex flex-col ${isOpen ? 'translate-x-0' : (lang === 'ar' ? '-translate-x-full' : 'translate-x-full')}`}>
         
         <div className="p-6 border-b border-white/10 flex justify-between items-center bg-obsidian">
