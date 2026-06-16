@@ -117,14 +117,16 @@
     "additional_details": "التفاصيل الإضافية"
   },
   "specs": {
-    "traction": "التماسك (Traction)",
-    "temperature": "الحرارة (Temperature)",
-    "treadwear": "معدل التآكل (Treadwear)",
+    "front_size": "المقاس الأمامي",
+    "rear_size": "المقاس الخلفي",
+    "treadwear": "معدل التآكل",
+    "traction": "التماسك",
     "speed_rating": "مؤشر السرعة",
     "load_index": "مؤشر الحمولة",
-    "run_flat": "مقاومة الانثقاب (Run Flat)",
+    "run_flat": "مقاومة الانثقاب",
     "season": "الموسم",
-    "warranty": "الضمان"
+    "warranty": "الضمان",
+    "torque": "عزم الدوران"
   },
   "order": {
     "no_image": "لا توجد صورة",

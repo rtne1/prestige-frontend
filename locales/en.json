@@ -117,14 +117,16 @@
     "additional_details": "Additional Details"
   },
   "specs": {
-    "traction": "Traction",
-    "temperature": "Temperature",
+    "front_size": "Front Size",
+    "rear_size": "Rear Size",
     "treadwear": "Treadwear",
+    "traction": "Traction",
     "speed_rating": "Speed Rating",
     "load_index": "Load Index",
     "run_flat": "Run Flat",
     "season": "Season",
-    "warranty": "Warranty"
+    "warranty": "Warranty",
+    "torque": "Torque"
   },
   "order": {
     "no_image": "NO IMAGE",

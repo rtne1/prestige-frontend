@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
-  const { t, lang } = useLanguage(); // <--- Added Translation Engine
+  const { t, lang } = useLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +24,46 @@ export default function LoginPage() {
     try {
       await api.get("/sanctum/csrf-cookie", { baseURL: process.env.NEXT_PUBLIC_BACKEND_URL });
       const response = await api.post("/auth/login", { email, password });
-      login(response.data.data.token, response.data.data.user);
+      
+      const token = response.data.data.token;
+      const user = response.data.data.user;
+
+      // ==========================================
+      // SILENT ORDER INTERCEPTOR
+      // ==========================================
+      const pendingConfig = localStorage.getItem("pending_config");
+      if (pendingConfig) {
+        try {
+          const configData = JSON.parse(pendingConfig);
+          
+          // Force Axios to use the new token immediately to prevent race conditions
+          const headers = { Authorization: `Bearer ${token}` };
+          
+          // 1. Save Vehicle to Vault
+          const vehRes = await api.post("/garage/vehicles", { 
+            vehicle_year_id: configData.selectedYear, 
+            nickname: null 
+          }, { headers });
+          
+          // 2. Submit the Tire Request
+          await api.post("/garage/requests", {
+            user_vehicle_id: vehRes.data.data.id,
+            compound_id: configData.selectedCompound,
+            ...configData.dimensions,
+            client_notes: configData.notes
+          }, { headers });
+
+          // 3. Clear storage so it doesn't submit twice
+          localStorage.removeItem("pending_config");
+        } catch (interceptError) {
+          console.error("Failed to process pending order during login:", interceptError);
+        }
+      }
+      // ==========================================
+
+      // Finish login (which will auto-redirect them to their garage)
+      login(token, user);
+      
     } catch (err: any) {
       const errorMsg = err.response?.data?.errors 
         ? Object.values(err.response.data.errors).flat().join(" ")

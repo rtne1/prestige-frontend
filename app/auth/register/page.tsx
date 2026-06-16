@@ -33,7 +33,40 @@ export default function RegisterPage() {
     try {
       await api.get("/sanctum/csrf-cookie", { baseURL: process.env.NEXT_PUBLIC_BACKEND_URL });
       const response = await api.post("/auth/register", formData);
-      login(response.data.data.token, response.data.data.user);
+      
+      const token = response.data.data.token;
+      const user = response.data.data.user;
+
+      // ==========================================
+      // SILENT ORDER INTERCEPTOR
+      // ==========================================
+      const pendingConfig = localStorage.getItem("pending_config");
+      if (pendingConfig) {
+        try {
+          const configData = JSON.parse(pendingConfig);
+          const headers = { Authorization: `Bearer ${token}` };
+          
+          const vehRes = await api.post("/garage/vehicles", { 
+            vehicle_year_id: configData.selectedYear, 
+            nickname: null 
+          }, { headers });
+          
+          await api.post("/garage/requests", {
+            user_vehicle_id: vehRes.data.data.id,
+            compound_id: configData.selectedCompound,
+            ...configData.dimensions,
+            client_notes: configData.notes
+          }, { headers });
+
+          localStorage.removeItem("pending_config");
+        } catch (interceptError) {
+          console.error("Failed to process pending order during registration:", interceptError);
+        }
+      }
+      // ==========================================
+
+      login(token, user);
+      
     } catch (err: any) {
       const errorMsg = err.response?.data?.errors 
         ? Object.values(err.response.data.errors).flat().join(" ")
