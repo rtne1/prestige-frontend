@@ -148,6 +148,8 @@
     "submit_dashboard": "Submit to Dashboard",
     "login_submit": "Login & Submit",
     "concierge_notice": "Our concierge team will verify your vehicle's OEM fitment before finalizing the order.",
-    "specs_verification": "Specifications will be verified by our concierge."
+    "specs_verification": "Specifications will be verified by our concierge.",
+    "oem_mark_title": "OEM Homologation Mark (Optional)",
+    "oem_mark_none": "No Preference"
   }
 }

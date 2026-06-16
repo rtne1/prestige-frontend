@@ -33,7 +33,7 @@ function OrderVehicleContent() {
 
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleResult | null>(null);
   const [tireQty, setTireQty] = useState<string>("");
-  const [selectedTraction, setSelectedTraction] = useState<string>(""); // NEW: Traction Selector
+  const [selectedOem, setSelectedOem] = useState<string>(""); // NEW: OEM Mark Selector
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,7 +47,17 @@ function OrderVehicleContent() {
     { id: "rear_1", label: t("configurator.qty_rear_1") },
   ];
 
-  const tractionOptions = ["AA", "A", "B", "C"]; // The tractions you requested
+  // LUXURY OEM MARKS
+  const oemOptions = [
+    { id: "AO", label: "AO (Audi)" },
+    { id: "MO", label: "MO (Mercedes)" },
+    { id: "N", label: "N0 / N1 (Porsche)" },
+    { id: "BMW", label: "★ (BMW)" },
+    { id: "L", label: "L (Lamborghini)" },
+    { id: "K", label: "K1 / K2 (Ferrari)" },
+    { id: "AM", label: "AM (Aston Martin)" },
+    { id: "J", label: "J (Jaguar)" },
+  ];
 
   useEffect(() => {
     if (!tireId) { router.push("/"); return; }
@@ -90,14 +100,13 @@ function OrderVehicleContent() {
     window.scrollTo({ top: window.innerHeight / 2, behavior: "smooth" });
   };
 
-  // FIX: Safely handling WhatsApp strings so it never crashes!
   const handleWhatsApp = () => {
     if (!tire || !selectedVehicle || !tireQty) return;
     const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
     
     let text = `${t("configurator.wa_greeting")}\n\n${t("configurator.wa_tire")} ${tire.brand.name} ${tire.model_name}\n*${t("order.selected_vehicle")}:* ${selectedVehicle.year} ${selectedVehicle.model.brand.name} ${selectedVehicle.model.name}\n*${t("configurator.qty_label")}:* ${qtyLabel}`;
     
-    if (selectedTraction) text += `\n*${t("specs.traction") || "Traction"}:* ${selectedTraction}`;
+    if (selectedOem) text += `\n*OEM Mark:* ${selectedOem}`;
     
     if (selectedVehicle.oemSpec) {
       text += `\n*${t("configurator.wa_front")}:* ${selectedVehicle.oemSpec.f_width}/${selectedVehicle.oemSpec.f_profile} R${selectedVehicle.oemSpec.f_rim}`;
@@ -114,7 +123,7 @@ function OrderVehicleContent() {
     try {
       const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
       let combinedNotes = `[${t("configurator.qty_label")}: ${qtyLabel}]`;
-      if (selectedTraction) combinedNotes += `\n[Traction Preference: ${selectedTraction}]`;
+      if (selectedOem) combinedNotes += `\n[OEM Preference: ${selectedOem}]`;
       if (notes) combinedNotes += `\n\n${notes}`;
 
       if (user) {
@@ -271,12 +280,12 @@ function OrderVehicleContent() {
                   </div>
                 )}
 
-                {/* USER SELECTS TRACTION HERE */}
-                <h3 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>Preferred Traction (Optional)</h3>
-                <div className="flex flex-wrap gap-3 mb-8">
-                  {tractionOptions.map(trac => (
-                    <button key={trac} onClick={() => setSelectedTraction(trac === selectedTraction ? "" : trac)} className={`px-6 py-4 rounded-xl border text-sm font-cinzel transition-all duration-300 ${selectedTraction === trac ? 'bg-crimson border-crimson text-white shadow-[0_0_20px_rgba(204,0,0,0.3)]' : 'bg-obsidian border-white/10 text-ash hover:border-white hover:text-white'}`}>
-                      {trac}
+                {/* THE NEW OEM HOMOLOGATION SELECTOR */}
+                <h3 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.oem_mark_title") || "OEM Homologation"}</h3>
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {oemOptions.map(opt => (
+                    <button key={opt.id} onClick={() => setSelectedOem(opt.id === selectedOem ? "" : opt.id)} className={`px-4 py-3 rounded-xl border text-xs transition-all duration-300 ${selectedOem === opt.id ? 'bg-crimson border-crimson text-white shadow-[0_0_20px_rgba(204,0,0,0.3)]' : 'bg-obsidian border-white/10 text-ash hover:border-white hover:text-white'}`}>
+                      {opt.label}
                     </button>
                   ))}
                 </div>
