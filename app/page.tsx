@@ -118,25 +118,19 @@ export default function Home() {
             <p className={`text-lg ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("home.no_results")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-[fadeInUp_0.8s_ease-out]">
-            {tires.map((tire) => {
-              const imageUrl = tire.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${tire.media.file_path}` : null;
-              return (
-                <Link href={`/tire/${tire.id}`} key={tire.id} className="group relative flex flex-col bg-carbon/40 border border-white/5 hover:border-crimson/50 rounded-2xl overflow-hidden transition-all duration-500 ease-luxury hover:shadow-[0_10px_40px_rgba(204,0,0,0.15)] hover:-translate-y-2">
-                  <div className="relative h-[250px] w-full p-8 flex items-center justify-center bg-gradient-to-b from-white/[0.02] to-transparent">
-                    {imageUrl ? (
-                      <img src={imageUrl} alt={tire.model_name} className="max-h-full max-w-full object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.8)] transition-transform duration-700 group-hover:scale-110" />
-                    ) : (
-                      <div className="text-ash/30 text-xs tracking-widest uppercase">{t("tire.no_image") || "No Image"}</div>
-                    )}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-crimson/0 group-hover:bg-crimson/20 blur-3xl rounded-full transition-all duration-700 z-0 pointer-events-none"></div>
-                  </div>
-                  
-                  <div className="p-6 border-t border-white/5 flex flex-col flex-1 bg-obsidian z-10">
+          <div className="p-6 border-t border-white/5 flex flex-col flex-1 bg-obsidian z-10 text-start">
                     <span className="text-[10px] uppercase tracking-[0.2em] text-crimson mb-2 font-bold">{tire.brand.name}</span>
                     <h3 className={`font-cinzel text-xl text-white leading-tight mb-4 group-hover:text-crimson transition-colors ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>
                       {tire.model_name}
                     </h3>
+                    
+                    {/* NEW PRICE DISPLAY ON HOMEPAGE */}
+                    {tire.specs && tire.specs['Price'] && (
+                      <div className="mb-4">
+                        <span className={`text-[9px] text-ash tracking-widest uppercase mr-2 ${lang === 'ar' ? 'font-cairo ml-2' : ''}`}>{t("configurator.starting_at") || "Starting at"}</span>
+                        <span className="text-white font-bold text-sm">{tire.specs['Price']}</span>
+                      </div>
+                    )}
                     
                     <div className="mt-auto pt-4 flex justify-between items-center border-t border-white/5">
                       <span className={`text-xs text-white/50 group-hover:text-white transition-colors ${lang === 'ar' ? 'font-cairo' : ''}`}>

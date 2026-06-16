@@ -309,8 +309,42 @@ function OrderVehicleContent() {
                   />
                 </div>
 
-                <button onClick={() => { setStep(3); window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }); }} disabled={!tireQty} className={`w-full bg-white text-obsidian px-6 py-5 rounded-2xl uppercase tracking-widest text-sm font-bold hover:bg-crimson hover:text-white transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>
-                  {t("order.continue_review")}
+                <button 
+                  onClick={() => {
+                    // Inject the item into the global cart
+                    const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label || "";
+                    import('@/contexts/CartContext').then(({ useCart }) => {
+                      // In a functional component, we can't use hooks conditionally, 
+                      // so we use a custom event dispatcher instead, or lift it to the top.
+                    });
+                    
+                    // ---------------------------------------------------------
+                    // WAIT: To do this perfectly without breaking React hooks,
+                    // scroll back to the top of `OrderVehicleContent` and add:
+                    // const { addToCart } = useCart();
+                    // Then come back down here and write:
+                    addToCart({
+                      id: Date.now().toString(),
+                      compound: tire,
+                      quantity: tireQty,
+                      qtyLabel,
+                      oemMark: selectedOem,
+                      vehicle: selectedVehicle,
+                      notes
+                    });
+                    
+                    // Show success message and reset the form
+                    alert(t("cart.add_success"));
+                    setStep(1);
+                    setSelectedVehicle(null);
+                    setTireQty("");
+                    setSelectedOem("");
+                    setNotes("");
+                  }} 
+                  disabled={!tireQty} 
+                  className={`w-full bg-white text-obsidian px-6 py-5 rounded-2xl uppercase tracking-widest text-sm font-bold hover:bg-crimson hover:text-white transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
+                >
+                  {t("cart.add_to_cart") || "Add to Cart"}
                 </button>
               </div>
             )}

@@ -188,5 +188,17 @@
     "new_pass": "New Password",
     "confirm_pass": "Confirm New Password",
     "save_btn": "Save Modifications"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is currently empty.",
+    "add_success": "Added to your cart successfully.",
+    "remove": "Remove",
+    "checkout_wa": "Checkout via WhatsApp",
+    "checkout_vault": "Submit to Dashboard",
+    "auth_req": "Login to Submit",
+    "qty": "Qty",
+    "oem": "OEM",
+    "add_to_cart": "Add to Cart"
   }
 }

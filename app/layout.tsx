@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { ChatWidget } from "@/components/ui/ChatWidget";
+import { CartProvider } from "@/contexts/CartContext";
 
 export const metadata: Metadata = {
   title: "Mr. Tires | Elite Performance",
@@ -24,8 +25,8 @@ export default function RootLayout({
         
         {/* Layer 1: Language Engine */}
         <LanguageProvider>
-          {/* Layer 2: Authentication Engine */}
           <AuthProvider>
+            <CartProvider>
             
             {/* All UI Components must sit INSIDE the engines so they can read the data! */}
             <CustomCursor />
@@ -34,8 +35,7 @@ export default function RootLayout({
             <main className="flex-grow">{children}</main>
             
             <Footer />
-            <ChatWidget />
-
+            </CartProvider>
           </AuthProvider>
         </LanguageProvider>
 
