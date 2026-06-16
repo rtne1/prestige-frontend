@@ -95,10 +95,8 @@ function ConfiguratorContent() {
     return () => { document.body.style.overflow = 'auto'; };
   }, []);
 
-  // CONTINENTAL RESTRICTION ENGINE
   const processTires = (brandName: string, oemData: Compound[], allData: Compound[]) => {
     const isRollsRoyce = brandName.toLowerCase().includes('rolls');
-    
     const filterContinental = (tires: Compound[]) => tires.filter(t => {
       if (t.brand.name.toLowerCase() === 'continental' && !isRollsRoyce) return false;
       return true;
@@ -177,6 +175,21 @@ function ConfiguratorContent() {
       router.push("/garage");
     } catch (error) {
       alert("Server Error."); setIsSubmitting(false);
+    }
+  };
+
+  // MISSING FUNCTION RESTORED HERE:
+  const handleAuthorize = () => {
+    if (!user) {
+      let combinedNotes = `[${t("configurator.qty_label")}: ${qtyOptions.find(o => o.id === tireQty)?.label}]`;
+      if (selectedOem) combinedNotes += `\n[OEM Preference: ${selectedOem}]`;
+      if (notes) combinedNotes += `\n\n${notes}`;
+
+      const configData = { selectedYear: selectedYear?.id, selectedCompound: selectedCompound?.id, dimensions: oemSpec, notes: combinedNotes };
+      localStorage.setItem("pending_config", JSON.stringify(configData));
+      router.push("/auth");
+    } else {
+      submitToVault();
     }
   };
 
@@ -403,9 +416,22 @@ function ConfiguratorContent() {
                   <span className="font-medium text-white">{selectedYear?.year} {translateDB(selectedBrand?.name || "", lang)} {translateDB(selectedModel?.name || "", lang)}</span>
                 </div>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
+                  <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_fitment")}</span>
+                  <span className="font-light text-white text-sm text-start md:text-end">
+                    F: {oemSpec?.f_width}/{oemSpec?.f_profile} R{oemSpec?.f_rim} <br/>
+                    R: {oemSpec?.r_width}/{oemSpec?.r_profile} R{oemSpec?.r_rim}
+                  </span>
+                </div>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.compound")}</span>
                   <span className="font-medium text-crimson">{translateDB(selectedCompound?.brand.name || "", lang)} {translateDB(selectedCompound?.model_name || "", lang)}</span>
                 </div>
+                {selectedOem && (
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
+                    <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_mark_title") || "OEM Mark"}</span>
+                    <span className="font-medium text-white">{selectedOem}</span>
+                  </div>
+                )}
               </div>
             </div>
 
