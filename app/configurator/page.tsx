@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import api from "@/lib/api";
@@ -14,16 +14,14 @@ interface Compound { id: number; model_name: string; specs: any; brand: { name: 
 
 function ConfiguratorContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const brandId = searchParams.get("brand_id");
-
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   
   const [phase, setPhase] = useState<"gallery" | "review">("gallery");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [brand, setBrand] = useState<Brand | null>(null);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [years, setYears] = useState<Year[]>([]);
@@ -53,25 +51,19 @@ function ConfiguratorContent() {
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    if (!brandId) { router.push("/"); return; }
-    
-    api.get("/vehicles/brands").then(res => {
-      const b = res.data.data.find((x: any) => x.id === Number(brandId));
-      if (b) setBrand(b);
-    });
-    api.get(`/vehicles/brands/${brandId}/models`).then(res => setModels(res.data.data));
-    api.get(`/compounds?brand_id=${brandId}`).then(res => setCompounds(res.data.data));
-    
+    api.get("/vehicles/brands").then(res => setBrands(res.data.data));
     return () => { document.body.style.overflow = 'auto'; };
-  }, [brandId, router]);
+  }, []);
+
+  const handleBrandClick = (b: Brand) => {
+    setSelectedBrand(b);
+    api.get(`/vehicles/brands/${b.id}/models`).then(res => setModels(res.data.data));
+    api.get(`/compounds?brand_id=${b.id}`).then(res => setCompounds(res.data.data));
+  };
 
   const handleModelClick = (m: Model) => {
     if (selectedModel?.id !== m.id) {
-      setSelectedYear(null);
-      setOemSpec(null);
-      setSelectedTireBrand(null);
-      setSelectedCompound(null);
-      setTireQty("");
+      setSelectedYear(null); setOemSpec(null); setSelectedTireBrand(null); setSelectedCompound(null); setTireQty("");
     }
     setSelectedModel(m);
     setIsDrawerOpen(true);
@@ -79,37 +71,27 @@ function ConfiguratorContent() {
   };
 
   const handleYearClick = (y: Year) => {
-    setSelectedYear(y); 
-    setSelectedTireBrand(null);
-    setSelectedCompound(null);
-    setTireQty("");
+    setSelectedYear(y); setSelectedTireBrand(null); setSelectedCompound(null); setTireQty("");
     api.get(`/vehicles/years/${y.id}/oem-specs`).then(res => {
       setOemSpec(res.data.data || { f_width: 0, f_profile: 0, f_rim: 0, r_width: 0, r_profile: 0, r_rim: 0 });
     });
   };
 
   const handleTireBrandClick = (brandName: string) => {
-    setSelectedTireBrand(brandName);
-    setSelectedCompound(null);
-    setTireQty("");
+    setSelectedTireBrand(brandName); setSelectedCompound(null); setTireQty("");
   };
 
   const handleCompoundClick = (c: Compound) => {
-    setSelectedCompound(c);
-    setTireQty("");
+    setSelectedCompound(c); setTireQty("");
     setTimeout(() => { qtyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150);
   };
 
-  const closeDrawer = () => {
-    setIsDrawerOpen(false);
-  };
+  const closeDrawer = () => setIsDrawerOpen(false);
 
   const handleWhatsApp = () => {
     if (!selectedModel || !selectedYear || !selectedCompound || !oemSpec || !tireQty) return;
     const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
-    
-    const text = `${t("configurator.wa_greeting")}\n\n*${t("configurator.vehicle")}:* ${selectedYear.year} ${brand?.name} ${selectedModel.name}\n*${t("configurator.wa_tire")}:* ${selectedCompound.brand.name} ${selectedCompound.model_name}\n*${t("configurator.wa_front")}:* ${oemSpec.f_width}/${oemSpec.f_profile} R${oemSpec.f_rim}\n*${t("configurator.wa_rear")}:* ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.r_rim}\n*${t("configurator.qty_label")}:* ${qtyLabel}`;
-
+    const text = `${t("configurator.wa_greeting")}\n\n*${t("configurator.vehicle")}:* ${selectedYear.year} ${selectedBrand?.name} ${selectedModel.name}\n*${t("configurator.wa_tire")}:* ${selectedCompound.brand.name} ${selectedCompound.model_name}\n*${t("configurator.wa_front")}:* ${oemSpec.f_width}/${oemSpec.f_profile} R${oemSpec.f_rim}\n*${t("configurator.wa_rear")}:* ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.r_rim}\n*${t("configurator.qty_label")}:* ${qtyLabel}`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -128,8 +110,7 @@ function ConfiguratorContent() {
       });
       router.push("/garage");
     } catch (error) {
-      alert("Server Error. Please try again.");
-      setIsSubmitting(false);
+      alert("Server Error."); setIsSubmitting(false);
     }
   };
 
@@ -148,63 +129,58 @@ function ConfiguratorContent() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-obsidian text-white overflow-hidden pt-[80px] md:pt-[100px]">
       
-      {phase === "gallery" && (
+      {phase === "gallery" && !selectedBrand && (
+        <div className="flex-1 w-full flex flex-col items-center justify-center p-6 animate-[fadeInUp_0.4s_ease-out]">
+          <h1 className={`font-cinzel text-3xl md:text-5xl text-white mb-10 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>Select Manufacturer</h1>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full max-w-6xl">
+            {brands.map(b => (
+              <button key={b.id} onClick={() => handleBrandClick(b)} className="bg-carbon/60 border border-white/5 hover:border-crimson rounded-2xl p-6 flex flex-col items-center transition-all duration-300 hover:shadow-[0_0_20px_rgba(204,0,0,0.2)]">
+                {b.media?.file_path ? <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${b.media.file_path}`} alt={b.name} className="h-12 object-contain mb-4 filter drop-shadow-md invert" /> : <div className="h-12 w-12 bg-white/10 rounded-full mb-4"></div>}
+                <span className="text-xs uppercase tracking-widest">{b.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {phase === "gallery" && selectedBrand && (
         <div className="flex flex-col h-full animate-[fadeInUp_0.4s_ease-out] relative">
           
           <div className="px-6 md:px-12 py-4 shrink-0 flex flex-col md:flex-row justify-between items-center gap-4 z-20">
-            <h1 className={`font-cinzel text-3xl tracking-widest uppercase ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
-              {brand?.name}
-            </h1>
+            <div className="flex items-center gap-4">
+              <button onClick={() => { setSelectedBrand(null); setIsDrawerOpen(false); }} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-ash hover:bg-crimson hover:text-white transition-all">
+                 <svg className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <h1 className={`font-cinzel text-3xl tracking-widest uppercase ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{selectedBrand.name}</h1>
+            </div>
             <div className="relative w-full md:w-96">
-              <svg className={`absolute top-3 w-5 h-5 text-ash ${lang === 'ar' ? 'right-3' : 'left-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              {/* THE FIX: text-base on mobile prevents the iPhone Safari Auto-Zoom Glitch! */}
-              <input 
-                type="text" 
-                placeholder={t("configurator.search_models")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full bg-carbon/80 border border-white/10 rounded-full py-3 text-base md:text-sm text-white outline-none focus:border-crimson transition-colors backdrop-blur-md ${lang === 'ar' ? 'pr-10 pl-4 font-cairo' : 'pl-10 pr-4'}`}
-              />
+              <input type="text" placeholder={t("configurator.search_models")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full bg-carbon/80 border border-white/10 rounded-full py-3 text-base md:text-sm text-white outline-none focus:border-crimson transition-colors backdrop-blur-md ${lang === 'ar' ? 'pr-10 pl-4 font-cairo' : 'pl-10 pr-4'}`} />
             </div>
           </div>
 
           <div className="relative flex-1 w-full flex overflow-hidden">
-            
-            {isDrawerOpen && (
-              <div className="absolute inset-0 z-30 hidden md:block cursor-pointer bg-obsidian/30 backdrop-blur-sm transition-all" onClick={closeDrawer} />
-            )}
+            {isDrawerOpen && <div className="absolute inset-0 z-30 hidden md:block cursor-pointer bg-obsidian/50 backdrop-blur-sm transition-all" onClick={closeDrawer} />}
 
             <div className="flex-1 overflow-y-hidden overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none hide-scrollbar px-6 md:px-12 py-4 md:py-8 w-full touch-pan-x overscroll-none">
-              {filteredModels.length === 0 ? (
-                <div className="w-full text-center text-ash font-light mt-10">No models found.</div>
-              ) : (
-                <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 pb-32 snap-x snap-mandatory md:snap-none w-full hide-scrollbar">
-                  {filteredModels.map(m => {
-                    const isActive = selectedModel?.id === m.id;
-                    const imageUrl = m.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${m.media.file_path}` : "https://images.unsplash.com/photo-1503376712351-404c0ecbd2b3?q=80&w=1000&auto=format&fit=crop";
-                    return (
-                      <div 
-                        key={m.id}
-                        onClick={() => handleModelClick(m)}
-                        className={`relative w-[85vw] md:w-full h-[45vh] md:h-[300px] rounded-2xl overflow-hidden snap-center md:snap-align-none shrink-0 md:shrink cursor-pointer transition-all duration-500 ease-luxury border ${isActive && isDrawerOpen ? 'border-crimson shadow-[0_0_30px_rgba(204,0,0,0.3)] scale-100' : 'border-white/10 opacity-70 hover:opacity-100 hover:border-white/30'}`}
-                      >
-                        <img src={imageUrl} alt={m.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] hover:scale-110 pointer-events-none" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent pointer-events-none"></div>
-                        <div className={`absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'right-6 md:right-8 text-start' : 'left-6 md:left-8 text-start'} z-10 w-full pr-16`}>
-                          <p className="text-[10px] uppercase tracking-widest text-crimson mb-1">{brand?.name}</p>
-                          <h3 className={`font-cinzel text-xl md:text-2xl text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{m.name}</h3>
-                        </div>
+              <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 pb-32 snap-x snap-mandatory md:snap-none w-full hide-scrollbar">
+                {filteredModels.map(m => {
+                  const isActive = selectedModel?.id === m.id;
+                  const imageUrl = m.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${m.media.file_path}` : "https://images.unsplash.com/photo-1503376712351-404c0ecbd2b3?q=80&w=1000";
+                  return (
+                    <div key={m.id} onClick={() => handleModelClick(m)} className={`relative w-[85vw] md:w-full h-[45vh] md:h-[300px] rounded-3xl overflow-hidden snap-center md:snap-align-none shrink-0 md:shrink cursor-pointer transition-all duration-500 ease-luxury border ${isActive && isDrawerOpen ? 'border-crimson shadow-[0_0_30px_rgba(204,0,0,0.3)] scale-100' : 'border-white/10 opacity-70 hover:opacity-100 hover:border-white/30'}`}>
+                      <img src={imageUrl} alt={m.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] hover:scale-110 pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent pointer-events-none"></div>
+                      <div className={`absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'right-6 md:right-8 text-start' : 'left-6 md:left-8 text-start'} z-10 w-full pr-16`}>
+                        <p className="text-[10px] uppercase tracking-widest text-crimson mb-1">{selectedBrand.name}</p>
+                        <h3 className={`font-cinzel text-xl md:text-2xl text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{m.name}</h3>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* THE FIX: Native iOS Bottom Sheet styling for mobile, anchored correctly. */}
             <div className={`fixed lg:absolute bottom-0 start-0 lg:start-auto lg:end-0 w-full lg:w-[450px] bg-obsidian/95 lg:bg-carbon/95 backdrop-blur-3xl border-t border-white/10 lg:border-t-0 lg:border-s rounded-t-3xl lg:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.5)] lg:shadow-none transition-transform duration-700 ease-luxury z-40 flex flex-col ${isDrawerOpen ? 'translate-y-0 lg:translate-x-0 max-h-[85vh] lg:max-h-full' : 'translate-y-full lg:translate-y-0 lg:translate-x-full rtl:lg:-translate-x-full max-h-[85vh] lg:max-h-full'}`}>
-              
-              {/* Mobile Drag Handle */}
               <div className="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onClick={closeDrawer}>
                 <div className="w-12 h-1.5 bg-white/20 rounded-full"></div>
               </div>
@@ -212,14 +188,14 @@ function ConfiguratorContent() {
               <div className="flex justify-between items-center px-6 pb-4 lg:p-6 lg:border-b border-white/5 shrink-0">
                 <div>
                   <h3 className={`font-cinzel text-xl text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{selectedModel?.name}</h3>
-                  <p className="text-[10px] text-ash uppercase tracking-widest mt-1">{brand?.name}</p>
+                  <p className="text-[10px] text-ash uppercase tracking-widest mt-1">{selectedBrand?.name}</p>
                 </div>
                 <button onClick={closeDrawer} className="w-10 h-10 rounded-full bg-white/5 hidden lg:flex items-center justify-center text-ash hover:text-white hover:bg-white/10 transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 md:p-8 pb-10 hide-scrollbar">
+              <div className="flex-1 overflow-y-auto p-6 md:p-8 pb-10 hide-scrollbar text-start">
                 
                 <div className="mb-8">
                   <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_year")}</h4>
@@ -235,7 +211,6 @@ function ConfiguratorContent() {
                 {selectedYear && oemSpec && (
                   <div className="mb-8 animate-[fadeInUp_0.4s_ease-out]">
                     <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_tire_brand")}</h4>
-                    {/* THE FIX: Horizontal scroll so CONTINENTAL fits perfectly without truncating! */}
                     <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-2 snap-x">
                       {uniqueTireBrands.map(tb => (
                         <button key={tb} onClick={() => handleTireBrandClick(tb)} className={`flex-none px-6 py-3 rounded-xl border text-xs md:text-sm font-cinzel font-semibold tracking-wider transition-all snap-start ${selectedTireBrand === tb ? 'bg-white border-white text-obsidian shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-obsidian border-white/20 text-ash hover:border-white hover:text-white'}`}>
@@ -254,8 +229,7 @@ function ConfiguratorContent() {
                         const tireImg = c.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${c.media.file_path}` : null;
                         return (
                           <div key={c.id} onClick={() => handleCompoundClick(c)} className={`relative p-5 rounded-2xl border cursor-pointer transition-all duration-500 overflow-hidden group flex items-center justify-between min-h-[140px] ${selectedCompound?.id === c.id ? 'bg-crimson/10 border-crimson shadow-[0_0_20px_rgba(204,0,0,0.2)]' : 'bg-carbon/40 border-white/10 hover:border-white/30 hover:bg-carbon/60'}`}>
-                            
-                            <div className="relative z-10 w-[60%] flex flex-col h-full">
+                            <div className="relative z-10 w-[60%] flex flex-col h-full text-start">
                               <div className="text-start mb-4">
                                 <span className="text-[9px] uppercase tracking-widest text-ash block mb-1">{c.brand.name}</span>
                                 <h5 className={`font-cinzel text-lg text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{c.model_name}</h5>
@@ -271,10 +245,8 @@ function ConfiguratorContent() {
                                   </div>
                               </div>
                             </div>
-
                             <div className="absolute top-0 bottom-0 end-0 w-[40%] flex items-center justify-center p-3 transition-transform duration-700 ease-luxury group-hover:scale-110 pointer-events-none">
                                 {tireImg && <img src={tireImg} alt={c.model_name} className="max-h-[110px] w-auto object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] relative z-10" />}
-                                {selectedCompound?.id === c.id && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-crimson/20 blur-2xl rounded-full z-0"></div>}
                             </div>
                           </div>
                         );
@@ -299,10 +271,8 @@ function ConfiguratorContent() {
                 </div>
               </div>
 
-              {/* THE FIX: Added pb-10 to clear the iPhone Home Bar! */}
               <div className={`p-6 pb-12 lg:pb-8 border-t border-white/5 flex flex-col gap-3 transition-all duration-500 bg-obsidian shrink-0 ${tireQty !== "" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none hidden'}`}>
                 <button onClick={handleWhatsApp} className={`w-full bg-[#25D366] text-obsidian px-6 py-4 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,211,102,0.2)] ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.124.553 4.195 1.603 6.015L.175 24l6.105-1.597c1.761.954 3.743 1.458 5.751 1.458 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm0 21.907c-1.808 0-3.582-.486-5.13-1.405l-.368-.218-3.811.996.996-3.811-.218-.368c-.919-1.548-1.405-3.322-1.405-5.13 0-5.546 4.514-10.06 10.06-10.06 5.546 0 10.06 4.514 10.06 10.06 0 5.546-4.514 10.06-10.06 10.06zm5.522-7.533c-.303-.152-1.794-.886-2.072-.987-.278-.101-.481-.152-.683.152-.202.303-.784.987-.96 1.189-.177.202-.354.227-.657.076-.303-.152-1.281-.473-2.441-1.506-.902-.803-1.509-1.794-1.686-2.097-.177-.303-.019-.467.133-.618.136-.136.303-.354.455-.53.152-.177.202-.303.303-.505.101-.202.051-.38-.025-.531-.076-.152-.683-1.646-.935-2.253-.246-.593-.496-.512-.683-.521-.177-.009-.38-.009-.582-.009-.202 0-.53.076-.808.38-.278.303-1.062 1.037-1.062 2.53s1.087 2.934 1.239 3.136c.152.202 2.137 3.262 5.176 4.571 2.222.956 3.037.91 4.148.758 1.111-.152 2.375-.987 2.704-1.921.329-.935.329-1.744.227-1.921-.102-.177-.38-.278-.684-.43z"/></svg>
                   {t("configurator.contact_now")}
                 </button>
                 <button onClick={() => setPhase("review")} className={`w-full bg-transparent border border-white/20 text-white px-6 py-4 rounded-xl uppercase tracking-widest text-[10px] hover:bg-white/10 transition-colors ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>
@@ -316,21 +286,18 @@ function ConfiguratorContent() {
 
       {phase === "review" && (
         <div className="absolute inset-0 z-50 bg-obsidian overflow-y-auto px-6 py-12 md:py-24 hide-scrollbar animate-[fadeInUp_0.4s_ease-out]">
-          <div className="max-w-2xl mx-auto pb-20">
-            <div className="bg-carbon border border-white/10 p-6 md:p-10 mb-8 rounded-2xl text-start relative overflow-hidden">
-              {selectedCompound?.media?.file_path && (
-                <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${selectedCompound.media.file_path}`} className={`absolute inset-y-0 ${lang === 'ar' ? 'left-[-10%]' : 'right-[-10%]'} w-[50%] h-full object-contain opacity-[0.04] pointer-events-none mix-blend-screen`} />
-              )}
+          <div className="max-w-2xl mx-auto pb-20 text-start">
+            <div className="bg-carbon border border-white/10 p-6 md:p-10 mb-8 rounded-3xl relative overflow-hidden">
               <h3 className={`font-cinzel text-2xl mb-8 border-b border-white/10 pb-6 relative z-10 ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("configurator.review")}</h3>
               <div className="space-y-6 relative z-10">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.vehicle")}</span>
-                  <span className="font-medium text-white">{selectedYear?.year} {brand?.name} {selectedModel?.name}</span>
+                  <span className="font-medium text-white">{selectedYear?.year} {selectedBrand?.name} {selectedModel?.name}</span>
                 </div>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_fitment")}</span>
                   <span className="font-light text-white text-sm text-start md:text-end">
-                    F: {oemSpec?.f_width}/{oemSpec?.f_profile} R{oemSpec?.f_rim} <br className="md:hidden"/>
+                    F: {oemSpec?.f_width}/{oemSpec?.f_profile} R{oemSpec?.f_rim} <br/>
                     R: {oemSpec?.r_width}/{oemSpec?.r_profile} R{oemSpec?.r_rim}
                   </span>
                 </div>
@@ -338,24 +305,6 @@ function ConfiguratorContent() {
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.compound")}</span>
                   <span className="font-medium text-crimson">{selectedCompound?.brand.name} {selectedCompound?.model_name}</span>
                 </div>
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
-                  <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.qty_label")}</span>
-                  <span className="font-medium text-white">{qtyOptions.find(o => o.id === tireQty)?.label}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative mt-8 flex flex-col text-start">
-              <label className={`text-[10px] uppercase tracking-widest text-ash mb-3 px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                {t("configurator.special_notes")}
-              </label>
-              <div className="p-[1px] rounded-2xl bg-gradient-to-b from-white/10 to-transparent">
-                <textarea 
-                  className="w-full bg-obsidian border-none outline-none transition-all text-white p-5 rounded-2xl focus:ring-1 focus:ring-crimson min-h-[140px] resize-none text-sm placeholder:text-ash/30" 
-                  placeholder={t("configurator.notes_placeholder")}
-                  value={notes} 
-                  onChange={(e) => setNotes(e.target.value)} 
-                />
               </div>
             </div>
 
@@ -379,4 +328,4 @@ export default function Page() {
       <ConfiguratorContent />
     </Suspense>
   );
-} 
+}
