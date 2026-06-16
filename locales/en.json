@@ -56,7 +56,10 @@
     "wa_front": "*Front:*",
     "wa_rear": "*Rear:*",
     "select_manufacturer": "Select Manufacturer",
-    "oem_mark_title": "OEM Homologation (Optional)"
+    "oem_mark_title": "OEM Homologation (Optional)",
+    "oem_approved_for": "OEM Approved for",
+    "explore_all": "Or Explore All Manufacturers",
+    "starting_at": "Starting at"
   },
   "chat": {
     "title": "Mr. Tires Support",
@@ -96,7 +99,12 @@
     "pass_label": "Password",
     "login_btn": "Login Securely",
     "no_account": "Not part of the registry?",
-    "create_profile": "Create Profile"
+    "create_profile": "Create Profile",
+    "verify_title": "Identity Verification",
+    "verifying": "Authenticating security token...",
+    "verify_success": "Your identity has been verified successfully.",
+    "verify_failed": "Security token invalid or expired.",
+    "go_home": "Enter Website"
   },
   "register": {
     "title": "Create Profile",

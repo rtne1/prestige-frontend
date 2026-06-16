@@ -12,45 +12,39 @@ interface Year { id: number; year: number; }
 interface OemSpec { f_width: number; f_profile: number; f_rim: number; r_width: number; r_profile: number; r_rim: number; }
 interface Compound { id: number; model_name: string; specs: any; brand: { name: string; media_id: number | null }; media: { file_path: string } | null; }
 
-// ENHANCED AUTO-TRANSLATOR
 const translateDB = (text: string, lang: string) => {
   if (lang === "en" || !text) return text;
-  
-  // Create a lowercase map for case-insensitive matching
   const map: Record<string, string> = {
-    // Brands
     'porsche': 'بورش', 'mercedes-benz': 'مرسيدس-بنز', 'bmw': 'بي ام دبليو', 
     'lamborghini': 'لامبورجيني', 'ferrari': 'فيراري', 'aston martin': 'أستون مارتن', 
     'bentley': 'بنتلي', 'rolls-royce': 'رولز رويس', 'range rover': 'رنج روفر', 'land rover': 'لاند روفر',
     'audi': 'أودي', 'lexus': 'لكزس',
-    // Tire Brands
     'michelin': 'ميشلان', 'pirelli': 'بيريلي', 'continental': 'كونتيننتال', 'bridgestone': 'بريدجستون',
     'dunlop': 'دنلوب', 'goodyear': 'جوديير',
-    // Popular Tire Models
-    'pilot sport 4s': 'بايلوت سبورت 4S', 'pilot sport 4': 'بايلوت سبورت 4', 'pilot sport 5': 'بايلوت سبورت 5',
-    'pilot sport 4 suv': 'بايلوت سبورت 4 SUV', 'pilot sport cup 2': 'بايلوت سبورت كاب 2',
-    'p zero': 'بي زيرو', 'p zero (pz4)': 'بي زيرو (PZ4)', 'p zero corsa': 'بي زيرو كورسا',
-    'p zero trofeo r': 'بي زيرو تروفيو R', 'scorpion zero': 'سكوربيون زيرو',
-    'sportcontact 6': 'سبورت كونتاكت 6', 'sportcontact 7': 'سبورت كونتاكت 7'
   };
-
   const lowerText = text.toLowerCase().trim();
-  
-  // Exact Match
   if (map[lowerText]) return map[lowerText];
-
-  // Partial Match Fallback (Replaces words inside strings)
   let translatedText = text;
   for (const [eng, ar] of Object.entries(map)) {
     const regex = new RegExp(`\\b${eng}\\b`, 'gi');
     translatedText = translatedText.replace(regex, ar);
   }
-  
   return translatedText;
+};
+
+// Helper to extract Price safely
+const getPrice = (specs: any) => {
+  let parsed: any = {};
+  if (typeof specs === 'string') { try { parsed = JSON.parse(specs); } catch (e) {} } 
+  else if (typeof specs === 'object' && specs !== null) { parsed = specs; }
+  
+  const priceKey = Object.keys(parsed).find(k => k.toLowerCase().includes('price'));
+  return priceKey ? parsed[priceKey] : null;
 };
 
 function ConfiguratorContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   
@@ -62,7 +56,10 @@ function ConfiguratorContent() {
   const [models, setModels] = useState<Model[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [years, setYears] = useState<Year[]>([]);
-  const [compounds, setCompounds] = useState<Compound[]>([]);
+  
+  // NEW LOGIC: Separate OEM tires from ALL tires
+  const [oemCompounds, setOemCompounds] = useState<Compound[]>([]);
+  const [allCompounds, setAllCompounds] = useState<Compound[]>([]);
   
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const qtyRef = useRef<HTMLDivElement>(null);
@@ -98,29 +95,25 @@ function ConfiguratorContent() {
     { id: "J", label: "J (Jaguar)" },
   ];
 
-  const searchParams = useSearchParams();
-
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    
-    // 1. Fetch Brands
     api.get("/vehicles/brands").then(res => {
       const allBrands = res.data.data;
       setBrands(allBrands);
       
-      // 2. CHECK FOR FAST-TRACK GARAGE ORDER
       const autoBrand = searchParams.get('auto_brand');
       const autoModel = searchParams.get('auto_model');
       const autoYear = searchParams.get('auto_year');
       
       if (autoBrand && autoModel && autoYear) {
-        // Auto-select the brand
         const b = allBrands.find((x: any) => x.id === Number(autoBrand));
         if (b) {
           setSelectedBrand(b);
-          api.get(`/compounds?brand_id=${b.id}`).then(cRes => setCompounds(cRes.data.data));
           
-          // Auto-select the model
+          // Fetch both OEM matches AND all tires for fallback
+          api.get(`/compounds?brand_id=${b.id}`).then(cRes => setOemCompounds(cRes.data.data));
+          api.get(`/compounds`).then(cRes => setAllCompounds(cRes.data.data));
+          
           api.get(`/vehicles/brands/${b.id}/models`).then(mRes => {
             setModels(mRes.data.data);
             const m = mRes.data.data.find((x: any) => x.id === Number(autoModel));
@@ -128,7 +121,6 @@ function ConfiguratorContent() {
               setSelectedModel(m);
               setIsDrawerOpen(true);
               
-              // Auto-select the year and pull OEM specs
               api.get(`/vehicles/models/${m.id}/years`).then(yRes => {
                 setYears(yRes.data.data);
                 const y = yRes.data.data.find((x: any) => x.id === Number(autoYear));
@@ -144,14 +136,17 @@ function ConfiguratorContent() {
         }
       }
     });
-
     return () => { document.body.style.overflow = 'auto'; };
   }, [searchParams]);
 
   const handleBrandClick = (b: Brand) => {
     setSelectedBrand(b);
     api.get(`/vehicles/brands/${b.id}/models`).then(res => setModels(res.data.data));
-    api.get(`/compounds?brand_id=${b.id}`).then(res => setCompounds(res.data.data));
+    
+    // Fetch EXACT OEM Matches for this Brand
+    api.get(`/compounds?brand_id=${b.id}`).then(res => setOemCompounds(res.data.data));
+    // Fetch ALL Tires for the "Explore All" optional fallback
+    api.get(`/compounds`).then(res => setAllCompounds(res.data.data));
   };
 
   const handleModelClick = (m: Model) => {
@@ -227,17 +222,17 @@ function ConfiguratorContent() {
   };
 
   const filteredModels = models.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  const uniqueTireBrands = Array.from(new Set(compounds.map(c => c.brand.name)));
-  const filteredCompounds = compounds.filter(c => c.brand.name === selectedTireBrand);
+  
+  // Extract unique brands for the manual selection
+  const uniqueTireBrands = Array.from(new Set(allCompounds.map(c => c.brand.name)));
+  const filteredAllCompounds = allCompounds.filter(c => c.brand.name === selectedTireBrand);
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-obsidian text-white overflow-hidden pt-[80px] md:pt-[100px] relative">
       
       <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-crimson/5 blur-[120px] rounded-[100%] pointer-events-none z-0"></div>
 
-      {/* ===================== BRAND SELECTION SCREEN ===================== */}
       {phase === "gallery" && !selectedBrand && (
-        // FIX: Added overflow-y-auto so you can always scroll through brands
         <div className="flex-1 w-full flex flex-col items-center justify-start p-6 md:p-12 overflow-y-auto hide-scrollbar animate-[fadeInUp_0.4s_ease-out] z-10 relative">
           
           <div className="text-center max-w-2xl mx-auto mb-16 mt-8 shrink-0">
@@ -249,24 +244,16 @@ function ConfiguratorContent() {
             </p>
           </div>
 
-          {/* FIX: Redesigned the Manufacturer Grid to exactly match the Models view */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 w-full pb-32">
             {brands.map(b => {
               const imageUrl = b.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${b.media.file_path}` : "https://images.unsplash.com/photo-1503376712351-404c0ecbd2b3?q=80&w=1000";
               return (
-                <div 
-                  key={b.id} 
-                  onClick={() => handleBrandClick(b)} 
-                  className={`relative w-full h-[300px] rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 ease-luxury border border-white/10 hover:border-crimson hover:shadow-[0_0_40px_rgba(204,0,0,0.4)] group`}
-                >
+                <div key={b.id} onClick={() => handleBrandClick(b)} className={`relative w-full h-[300px] rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 ease-luxury border border-white/10 hover:border-crimson hover:shadow-[0_0_40px_rgba(204,0,0,0.4)] group`}>
                   <img src={imageUrl} alt={b.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110 pointer-events-none" />
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent pointer-events-none"></div>
-                  
                   <div className={`absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'right-6 md:right-8 text-start' : 'left-6 md:left-8 text-start'} z-10 w-full pr-16`}>
                     <p className="text-[10px] uppercase tracking-widest text-crimson mb-1 font-bold">Premium Experience</p>
-                    <h3 className={`font-cinzel text-2xl text-white leading-tight drop-shadow-lg ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
-                      {translateDB(b.name, lang)}
-                    </h3>
+                    <h3 className={`font-cinzel text-2xl text-white leading-tight drop-shadow-lg ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{translateDB(b.name, lang)}</h3>
                   </div>
                 </div>
               );
@@ -284,9 +271,7 @@ function ConfiguratorContent() {
               <button onClick={() => { setSelectedBrand(null); setIsDrawerOpen(false); }} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-ash hover:bg-crimson hover:text-white transition-all shadow-lg shrink-0">
                  <svg className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               </button>
-              <h1 className={`font-cinzel text-2xl md:text-3xl tracking-widest uppercase text-white drop-shadow-md ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
-                {translateDB(selectedBrand.name, lang)}
-              </h1>
+              <h1 className={`font-cinzel text-2xl md:text-3xl tracking-widest uppercase text-white drop-shadow-md ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{translateDB(selectedBrand.name, lang)}</h1>
             </div>
             <div className="relative w-full md:w-96 shadow-lg">
               <input type="text" placeholder={t("configurator.search_models")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full bg-carbon/80 border border-white/10 rounded-full py-3 text-base md:text-sm text-white outline-none focus:border-crimson transition-colors backdrop-blur-md ${lang === 'ar' ? 'pr-10 pl-4 font-cairo' : 'pl-10 pr-4'}`} />
@@ -296,7 +281,6 @@ function ConfiguratorContent() {
           <div className="relative flex-1 w-full flex overflow-hidden">
             {isDrawerOpen && <div className="absolute inset-0 z-30 hidden md:block cursor-pointer bg-obsidian/60 backdrop-blur-md transition-all" onClick={closeDrawer} />}
 
-            {/* FIX: Changed md:overflow-x-hidden to md:overflow-y-auto so desktop can scroll down the grid! */}
             <div className="flex-1 overflow-y-hidden overflow-x-auto md:overflow-y-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none hide-scrollbar px-6 md:px-12 py-4 md:py-8 w-full touch-pan-x md:touch-auto overscroll-none">
               <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 pb-32 snap-x snap-mandatory md:snap-none w-full hide-scrollbar">
                 {filteredModels.map(m => {
@@ -345,50 +329,87 @@ function ConfiguratorContent() {
                   </div>
                 </div>
 
+                {/* THE NEW TIRE SELECTION EXPERIENCE */}
                 {selectedYear && oemSpec && (
-                  <div className="mb-8 animate-[fadeInUp_0.4s_ease-out]">
-                    <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_tire_brand")}</h4>
-                    <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-2 snap-x">
-                      {uniqueTireBrands.map(tb => (
-                        <button key={tb} onClick={() => handleTireBrandClick(tb)} className={`flex-none px-6 py-3 rounded-xl border text-xs md:text-sm font-cinzel font-semibold tracking-wider transition-all duration-300 snap-start ${selectedTireBrand === tb ? 'bg-white border-white text-obsidian shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-obsidian border-white/20 text-ash hover:border-white hover:text-white'}`}>
-                          {translateDB(tb, lang)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  <div className="animate-[fadeInUp_0.4s_ease-out]">
+                    
+                    {/* SECTION 1: OEM EXACT MATCHES */}
+                    {oemCompounds.length > 0 && (
+                      <div className="mb-8 bg-carbon border border-white/10 rounded-2xl p-5 shadow-inner">
+                        <h4 className={`text-[10px] uppercase tracking-[0.2em] text-crimson mb-4 font-bold ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                          {t("configurator.oem_approved_for")} {translateDB(selectedBrand?.name || "", lang)}
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 gap-3">
+                          {oemCompounds.map(c => {
+                            const tireImg = c.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${c.media.file_path}` : null;
+                            const price = getPrice(c.specs);
+                            return (
+                              <div key={c.id} onClick={() => handleCompoundClick(c)} className={`relative p-4 rounded-xl border cursor-pointer transition-all duration-500 group flex items-center justify-between min-h-[100px] ${selectedCompound?.id === c.id ? 'bg-crimson/10 border-crimson shadow-[0_0_20px_rgba(204,0,0,0.2)]' : 'bg-obsidian border-white/5 hover:border-white/30'}`}>
+                                <div className="relative z-10 w-[65%] flex flex-col h-full text-start">
+                                  <span className={`text-[9px] uppercase tracking-widest text-ash block mb-0.5 font-bold ${lang === 'ar' ? 'font-cairo' : ''}`}>{translateDB(c.brand.name, lang)}</span>
+                                  <h5 className={`font-cinzel text-base text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{translateDB(c.model_name, lang)}</h5>
+                                  
+                                  {/* THE PRICE DISPLAY */}
+                                  {price && (
+                                    <div className="mt-3 inline-block bg-white/5 border border-white/10 rounded-md px-3 py-1 w-fit">
+                                      <span className={`text-[9px] text-ash tracking-widest uppercase mr-2 ${lang === 'ar' ? 'font-cairo ml-2' : ''}`}>{t("configurator.starting_at")}</span>
+                                      <span className="text-crimson font-bold text-sm">{price}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="absolute top-0 bottom-0 end-0 w-[35%] flex items-center justify-center p-2 pointer-events-none">
+                                    {tireImg && <img src={tireImg} alt={c.model_name} className="max-h-[80px] w-auto object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] transition-transform duration-500 group-hover:scale-110" />}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
-                {selectedTireBrand && (
-                  <div className="mb-8 animate-[fadeInUp_0.4s_ease-out]">
-                    <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.select_tire")}</h4>
-                    <div className="grid grid-cols-1 gap-4 mb-4">
-                      {filteredCompounds.map(c => {
-                        const tireImg = c.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${c.media.file_path}` : null;
-                        return (
-                          <div key={c.id} onClick={() => handleCompoundClick(c)} className={`relative p-5 rounded-2xl border cursor-pointer transition-all duration-500 overflow-hidden group flex items-center justify-between min-h-[140px] ${selectedCompound?.id === c.id ? 'bg-crimson/10 border-crimson shadow-[0_0_20px_rgba(204,0,0,0.2)]' : 'bg-carbon/40 border-white/10 hover:border-white/30 hover:bg-carbon/60'}`}>
-                            <div className="relative z-10 w-[60%] flex flex-col h-full text-start">
-                              <div className="text-start mb-4">
-                                <span className={`text-[9px] uppercase tracking-widest text-ash block mb-1 font-bold ${lang === 'ar' ? 'font-cairo' : ''}`}>{translateDB(c.brand.name, lang)}</span>
-                                <h5 className={`font-cinzel text-lg text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{translateDB(c.model_name, lang)}</h5>
+                    {/* SECTION 2: THE FALLBACK (ALL BRANDS) */}
+                    <div className="mb-8 border-t border-white/10 pt-6">
+                      <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                        {t("configurator.explore_all")}
+                      </h4>
+                      <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-4 snap-x">
+                        {uniqueTireBrands.map(tb => (
+                          <button key={tb} onClick={() => handleTireBrandClick(tb)} className={`flex-none px-6 py-3 rounded-xl border text-xs md:text-sm font-cinzel font-semibold tracking-wider transition-all duration-300 snap-start ${selectedTireBrand === tb ? 'bg-white border-white text-obsidian shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-obsidian border-white/20 text-ash hover:border-white hover:text-white'}`}>
+                            {translateDB(tb, lang)}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Display the manually selected brand's tires */}
+                      {selectedTireBrand && (
+                        <div className="grid grid-cols-1 gap-3 animate-[fadeInUp_0.3s_ease-out]">
+                          {filteredAllCompounds.map(c => {
+                            const tireImg = c.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${c.media.file_path}` : null;
+                            const price = getPrice(c.specs);
+                            return (
+                              <div key={c.id} onClick={() => handleCompoundClick(c)} className={`relative p-4 rounded-xl border cursor-pointer transition-all duration-500 group flex items-center justify-between min-h-[100px] ${selectedCompound?.id === c.id ? 'bg-crimson/10 border-crimson shadow-[0_0_20px_rgba(204,0,0,0.2)]' : 'bg-carbon/40 border-white/5 hover:border-white/30'}`}>
+                                <div className="relative z-10 w-[65%] flex flex-col h-full text-start">
+                                  <span className={`text-[9px] uppercase tracking-widest text-ash block mb-0.5 font-bold ${lang === 'ar' ? 'font-cairo' : ''}`}>{translateDB(c.brand.name, lang)}</span>
+                                  <h5 className={`font-cinzel text-base text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{translateDB(c.model_name, lang)}</h5>
+                                  
+                                  {price && (
+                                    <div className="mt-3 inline-block bg-white/5 border border-white/10 rounded-md px-3 py-1 w-fit">
+                                      <span className={`text-[9px] text-ash tracking-widest uppercase mr-2 ${lang === 'ar' ? 'font-cairo ml-2' : ''}`}>{t("configurator.starting_at")}</span>
+                                      <span className="text-white font-bold text-sm">{price}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="absolute top-0 bottom-0 end-0 w-[35%] flex items-center justify-center p-2 pointer-events-none">
+                                    {tireImg && <img src={tireImg} alt={c.model_name} className="max-h-[80px] w-auto object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] transition-transform duration-500 group-hover:scale-110" />}
+                                </div>
                               </div>
-                              <div className="flex flex-col gap-2 mt-auto border-t border-white/10 pt-3">
-                                  <div className="flex justify-between items-center text-start">
-                                      <span className={`text-[8px] uppercase tracking-widest text-ash ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.front_axle")}</span>
-                                      <span className="text-xs text-white/90 font-medium">{oemSpec?.f_width}/{oemSpec?.f_profile} <span className="text-[10px] text-ash">R{oemSpec?.f_rim}</span></span>
-                                  </div>
-                                  <div className="flex justify-between items-center text-start">
-                                      <span className={`text-[8px] uppercase tracking-widest text-ash ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.rear_axle")}</span>
-                                      <span className="text-xs text-white/90 font-medium">{oemSpec?.r_width}/{oemSpec?.r_profile} <span className="text-[10px] text-ash">R{oemSpec?.r_rim}</span></span>
-                                  </div>
-                              </div>
-                            </div>
-                            <div className="absolute top-0 bottom-0 end-0 w-[40%] flex items-center justify-center p-3 transition-transform duration-700 ease-luxury group-hover:scale-110 pointer-events-none">
-                                {tireImg && <img src={tireImg} alt={c.model_name} className="max-h-[110px] w-auto object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] relative z-10" />}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
+
                   </div>
                 )}
 

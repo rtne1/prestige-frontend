@@ -56,7 +56,10 @@
     "wa_front": "*أمامي:*",
     "wa_rear": "*خلفي:*",
     "select_manufacturer": "اختر الشركة المصنعة",
-    "oem_mark_title": "اعتماد المصنع OEM (اختياري)"
+    "oem_mark_title": "اعتماد المصنع OEM (اختياري)",
+    "oem_approved_for": "إطارات المصنع المعتمدة لـ",
+    "explore_all": "أو استكشف جميع الشركات المصنعة",
+    "starting_at": "تبدأ من"
   },
   "chat": {
     "title": "خدمة عملاء مستر تايرز",
@@ -96,7 +99,12 @@
     "pass_label": "كلمة المرور",
     "login_btn": "دخول آمن",
     "no_account": "ليس لديك حساب؟",
-    "create_profile": "إنشاء حساب"
+    "create_profile": "إنشاء حساب",
+    "verify_title": "التحقق من الهوية",
+    "verifying": "جاري مصادقة رمز الأمان...",
+    "verify_success": "تم التحقق من هويتك بنجاح.",
+    "verify_failed": "رمز الأمان غير صالح أو منتهي الصلاحية.",
+    "go_home": "الدخول للموقع"
   },
   "register": {
     "title": "إنشاء حساب",
