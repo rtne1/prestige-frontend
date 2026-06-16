@@ -16,6 +16,14 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+// Magic function to convert HEX to RGB for Tailwind opacity support
+const hexToRgb = (hex: string) => {
+  let clean = hex.replace('#', '');
+  if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+  const num = parseInt(clean, 16);
+  return `${(num >> 16) & 255} ${(num >> 8) & 255} ${num & 255}`;
+};
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Language>("en");
   const [dbDict, setDbDict] = useState<Record<string, {en: string, ar: string}>>({});
@@ -24,12 +32,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem("prestige_lang") as Language;
     if (saved) setLang(saved);
     
-    // Fetch overrides from the dashboard
+    // Fetch Overrides
     api.get("/translations").then(res => {
       const formatted: any = {};
       res.data.data.forEach((item: any) => { formatted[item.key] = { en: item.en, ar: item.ar }; });
       setDbDict(formatted);
     }).catch(console.error);
+
+    // ==========================================
+    // THEME ENGINE INJECTION
+    // ==========================================
+    api.get("/theme").then(res => {
+      res.data.data.forEach((theme: any) => {
+        document.documentElement.style.setProperty(`--color-${theme.key}`, hexToRgb(theme.value));
+      });
+    }).catch(console.error);
+
   }, []);
 
   useEffect(() => {
@@ -52,20 +70,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (path: string) => {
-    // 1. Check if you customized it in the Dashboard
-    if (dbDict[path] && dbDict[path][lang]) {
-      return dbDict[path][lang];
-    }
-
-    // 2. Otherwise, automatically pull from the local JSON files
+    if (dbDict[path] && dbDict[path][lang]) return dbDict[path][lang];
     const keys = path.split(".");
     let value: any = localDictionaries[lang];
     for (const key of keys) {
-      if (value && value[key]) {
-        value = value[key];
-      } else {
-        return path; // Fallback so it never breaks
-      }
+      if (value && value[key]) value = value[key];
+      else return path;
     }
     return value;
   };

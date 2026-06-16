@@ -9,14 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        obsidian: "#050505",
-        carbon: "#121212",
-        tungsten: "#1A1A1A",
+        obsidian: "rgb(var(--color-obsidian, 5 5 5) / <alpha-value>)",
+        carbon: "rgb(var(--color-carbon, 18 18 18) / <alpha-value>)",
+        tungsten: "rgb(var(--color-tungsten, 26 26 26) / <alpha-value>)",
         crimson: {
-          DEFAULT: "#CC0000",
-          hover: "#FF1A1A",
+          DEFAULT: "rgb(var(--color-crimson, 204 0 0) / <alpha-value>)",
+          hover: "rgb(var(--color-crimson-hover, 255 26 26) / <alpha-value>)",
         },
-        ash: "#888888",
+        ash: "rgb(var(--color-ash, 136 136 136) / <alpha-value>)",
         glass: "rgba(255, 255, 255, 0.08)",
       },
       fontFamily: {
@@ -27,7 +27,6 @@ const config: Config = {
       transitionTimingFunction: {
         luxury: "cubic-bezier(0.16, 1, 0.3, 1)",
       },
-      // ADDED THE MISSING ANIMATIONS HERE:
       keyframes: {
         fadeInUp: {
           '0%': { opacity: '0', transform: 'translateY(40px)' },
