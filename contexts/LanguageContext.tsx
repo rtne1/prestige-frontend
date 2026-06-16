@@ -42,11 +42,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // ==========================================
     // THEME ENGINE INJECTION
     // ==========================================
-    api.get("/theme").then(res => {
+    api.get(`/theme?fresh=${new Date().getTime()}`).then(res => {
       res.data.data.forEach((theme: any) => {
         document.documentElement.style.setProperty(`--color-${theme.key}`, hexToRgb(theme.value));
       });
-    }).catch(console.error);
+    }).catch(err => {
+      console.error("Failed to load theme colors:", err);
+    });
 
   }, []);
 
