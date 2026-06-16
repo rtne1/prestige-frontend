@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCart } from "@/contexts/CartContext"; // <-- ADDED THIS IMPORT!
 import api from "@/lib/api";
 
 interface Tire { id: number; model_name: string; specs: any; brand: { name: string }; media: { file_path: string } | null; }
@@ -15,6 +16,7 @@ function OrderVehicleContent() {
   const tireId = searchParams.get("tire_id");
   const { user } = useAuth();
   const { t, lang } = useLanguage();
+  const { addToCart } = useCart(); // <-- ADDED THIS HOOK!
 
   const [tire, setTire] = useState<Tire | null>(null);
   const [tab, setTab] = useState<"search" | "manual">("search");
@@ -33,30 +35,22 @@ function OrderVehicleContent() {
 
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleResult | null>(null);
   const [tireQty, setTireQty] = useState<string>("");
-  const [selectedOem, setSelectedOem] = useState<string>(""); // NEW: OEM Mark Selector
+  const [selectedOem, setSelectedOem] = useState<string>(""); 
   const [notes, setNotes] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const WHATSAPP_NUMBER = "966568890653";
 
   const qtyOptions = [
-    { id: "all", label: t("configurator.qty_all") },
-    { id: "front_2", label: t("configurator.qty_front_2") },
-    { id: "rear_2", label: t("configurator.qty_rear_2") },
-    { id: "front_1", label: t("configurator.qty_front_1") },
-    { id: "rear_1", label: t("configurator.qty_rear_1") },
+    { id: "all", label: t("configurator.qty_all") || "All 4 Tires" },
+    { id: "front_2", label: t("configurator.qty_front_2") || "2 Front" },
+    { id: "rear_2", label: t("configurator.qty_rear_2") || "2 Rear" },
+    { id: "front_1", label: t("configurator.qty_front_1") || "1 Front" },
+    { id: "rear_1", label: t("configurator.qty_rear_1") || "1 Rear" },
   ];
 
-  // LUXURY OEM MARKS
   const oemOptions = [
-    { id: "AO", label: "AO (Audi)" },
-    { id: "MO", label: "MO (Mercedes)" },
-    { id: "N", label: "N0 / N1 (Porsche)" },
-    { id: "BMW", label: "★ (BMW)" },
-    { id: "L", label: "L (Lamborghini)" },
-    { id: "K", label: "K1 / K2 (Ferrari)" },
-    { id: "AM", label: "AM (Aston Martin)" },
-    { id: "J", label: "J (Jaguar)" },
+    { id: "AO", label: "AO (Audi)" }, { id: "MO", label: "MO (Mercedes)" },
+    { id: "N", label: "N0 / N1 (Porsche)" }, { id: "BMW", label: "★ (BMW)" },
+    { id: "L", label: "L (Lamborghini)" }, { id: "K", label: "K1 / K2 (Ferrari)" },
+    { id: "AM", label: "AM (Aston Martin)" }, { id: "J", label: "J (Jaguar)" },
   ];
 
   useEffect(() => {
@@ -98,52 +92,6 @@ function OrderVehicleContent() {
     setSelectedVehicle(v);
     setStep(2); 
     window.scrollTo({ top: window.innerHeight / 2, behavior: "smooth" });
-  };
-
-  const handleWhatsApp = () => {
-    if (!tire || !selectedVehicle || !tireQty) return;
-    const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
-    
-    let text = `${t("configurator.wa_greeting")}\n\n${t("configurator.wa_tire")} ${tire.brand.name} ${tire.model_name}\n*${t("order.selected_vehicle")}:* ${selectedVehicle.year} ${selectedVehicle.model.brand.name} ${selectedVehicle.model.name}\n*${t("configurator.qty_label")}:* ${qtyLabel}`;
-    
-    if (selectedOem) text += `\n*OEM Mark:* ${selectedOem}`;
-    
-    if (selectedVehicle.oemSpec) {
-      text += `\n*${t("configurator.wa_front")}:* ${selectedVehicle.oemSpec.f_width}/${selectedVehicle.oemSpec.f_profile} R${selectedVehicle.oemSpec.f_rim}`;
-      text += `\n*${t("configurator.wa_rear")}:* ${selectedVehicle.oemSpec.r_width}/${selectedVehicle.oemSpec.r_profile} R${selectedVehicle.oemSpec.r_rim}`;
-    }
-
-    if (notes) text += `\n\n*${t("order.special_notes")}:* ${notes}`;
-    
-    window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-  };
-
-  const handleContinueToVault = async () => {
-    setIsSubmitting(true);
-    try {
-      const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
-      let combinedNotes = `[${t("configurator.qty_label")}: ${qtyLabel}]`;
-      if (selectedOem) combinedNotes += `\n[OEM Preference: ${selectedOem}]`;
-      if (notes) combinedNotes += `\n\n${notes}`;
-
-      if (user) {
-        const vehRes = await api.post("/garage/vehicles", { vehicle_year_id: selectedVehicle?.id, nickname: null });
-        await api.post("/garage/requests", {
-          user_vehicle_id: vehRes.data.data.id,
-          compound_id: tire?.id,
-          ...selectedVehicle?.oemSpec,
-          client_notes: combinedNotes
-        });
-        router.push("/garage");
-      } else {
-        const configData = { selectedYear: selectedVehicle?.id, selectedCompound: tire?.id, dimensions: selectedVehicle?.oemSpec, notes: combinedNotes };
-        localStorage.setItem("pending_config", JSON.stringify(configData));
-        router.push("/auth");
-      }
-    } catch (error) {
-      alert("Server Error. Please try again.");
-      setIsSubmitting(false);
-    }
   };
 
   const tireImg = tire?.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${tire.media.file_path}` : null;
@@ -256,7 +204,6 @@ function OrderVehicleContent() {
           <div className={`bg-carbon/40 backdrop-blur-xl border rounded-[2rem] p-6 md:p-10 transition-all duration-700 ${step === 2 ? 'border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.3)]' : 'border-white/5 opacity-50 pointer-events-none'}`}>
             <div className="flex justify-between items-center mb-8 gap-4 border-b border-white/5 pb-6">
               <h2 className={`font-cinzel text-xl md:text-2xl text-white ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_2_title")}</h2>
-              {step > 2 && <button onClick={() => setStep(2)} className={`text-[10px] uppercase tracking-widest text-crimson hover:text-white px-4 py-2 border border-crimson/30 rounded-full hover:bg-crimson/10 transition-colors pointer-events-auto ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.edit")}</button>}
             </div>
 
             {step === 2 && (
@@ -280,7 +227,6 @@ function OrderVehicleContent() {
                   </div>
                 )}
 
-                {/* THE NEW OEM HOMOLOGATION SELECTOR */}
                 <h3 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.oem_mark_title") || "OEM Homologation"}</h3>
                 <div className="flex flex-wrap gap-2 mb-8">
                   {oemOptions.map(opt => (
@@ -311,18 +257,7 @@ function OrderVehicleContent() {
 
                 <button 
                   onClick={() => {
-                    // Inject the item into the global cart
                     const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label || "";
-                    import('@/contexts/CartContext').then(({ useCart }) => {
-                      // In a functional component, we can't use hooks conditionally, 
-                      // so we use a custom event dispatcher instead, or lift it to the top.
-                    });
-                    
-                    // ---------------------------------------------------------
-                    // WAIT: To do this perfectly without breaking React hooks,
-                    // scroll back to the top of `OrderVehicleContent` and add:
-                    // const { addToCart } = useCart();
-                    // Then come back down here and write:
                     addToCart({
                       id: Date.now().toString(),
                       compound: tire,
@@ -333,38 +268,21 @@ function OrderVehicleContent() {
                       notes
                     });
                     
-                    // Show success message and reset the form
-                    alert(t("cart.add_success"));
+                    alert(t("cart.add_success") || "Added to your cart successfully.");
+                    
+                    // Reset the form so they can add another tire
                     setStep(1);
                     setSelectedVehicle(null);
                     setTireQty("");
                     setSelectedOem("");
                     setNotes("");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
                   }} 
                   disabled={!tireQty} 
                   className={`w-full bg-white text-obsidian px-6 py-5 rounded-2xl uppercase tracking-widest text-sm font-bold hover:bg-crimson hover:text-white transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
                 >
                   {t("cart.add_to_cart") || "Add to Cart"}
                 </button>
-              </div>
-            )}
-          </div>
-
-          {/* STEP 3 */}
-          <div className={`bg-carbon/40 backdrop-blur-xl border rounded-[2rem] p-6 md:p-10 transition-all duration-700 ${step === 3 ? 'border-crimson/50 shadow-[0_10px_50px_rgba(204,0,0,0.15)]' : 'border-white/5 opacity-50 pointer-events-none hidden md:block'}`}>
-            <h2 className={`font-cinzel text-xl md:text-2xl mb-8 text-white ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}>{t("order.step_3_title")}</h2>
-            {step === 3 && (
-              <div className="animate-[fadeInUp_0.4s_ease-out]">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button onClick={handleWhatsApp} className="flex-1 bg-[#25D366] text-obsidian px-6 py-5 rounded-2xl uppercase tracking-widest text-[10px] md:text-xs font-bold hover:bg-[#20bd5a] transition-all flex flex-col items-center justify-center gap-3 shadow-[0_10px_30px_rgba(37,211,102,0.2)] hover:-translate-y-1">
-                    <span className={lang === 'ar' ? 'font-cairo' : ''}>{t("order.wa_btn")}</span>
-                  </button>
-                  <button onClick={handleContinueToVault} disabled={isSubmitting} className="flex-1 bg-crimson text-white px-6 py-5 rounded-2xl uppercase tracking-widest text-[10px] md:text-xs font-bold hover:bg-white hover:text-obsidian transition-all shadow-[0_10px_40px_rgba(204,0,0,0.4)] hover:-translate-y-1 disabled:opacity-50 disabled:hover:translate-y-0 flex flex-col items-center justify-center gap-3">
-                    <span className={lang === 'ar' ? 'font-cairo' : ''}>
-                      {isSubmitting ? t("order.processing") : (user ? t("order.submit_dashboard") : t("order.login_submit"))}
-                    </span>
-                  </button>
-                </div>
               </div>
             )}
           </div>
