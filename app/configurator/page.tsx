@@ -98,11 +98,55 @@ function ConfiguratorContent() {
     { id: "J", label: "J (Jaguar)" },
   ];
 
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    api.get("/vehicles/brands").then(res => setBrands(res.data.data));
+    
+    // 1. Fetch Brands
+    api.get("/vehicles/brands").then(res => {
+      const allBrands = res.data.data;
+      setBrands(allBrands);
+      
+      // 2. CHECK FOR FAST-TRACK GARAGE ORDER
+      const autoBrand = searchParams.get('auto_brand');
+      const autoModel = searchParams.get('auto_model');
+      const autoYear = searchParams.get('auto_year');
+      
+      if (autoBrand && autoModel && autoYear) {
+        // Auto-select the brand
+        const b = allBrands.find((x: any) => x.id === Number(autoBrand));
+        if (b) {
+          setSelectedBrand(b);
+          api.get(`/compounds?brand_id=${b.id}`).then(cRes => setCompounds(cRes.data.data));
+          
+          // Auto-select the model
+          api.get(`/vehicles/brands/${b.id}/models`).then(mRes => {
+            setModels(mRes.data.data);
+            const m = mRes.data.data.find((x: any) => x.id === Number(autoModel));
+            if (m) {
+              setSelectedModel(m);
+              setIsDrawerOpen(true);
+              
+              // Auto-select the year and pull OEM specs
+              api.get(`/vehicles/models/${m.id}/years`).then(yRes => {
+                setYears(yRes.data.data);
+                const y = yRes.data.data.find((x: any) => x.id === Number(autoYear));
+                if (y) {
+                  setSelectedYear(y);
+                  api.get(`/vehicles/years/${y.id}/oem-specs`).then(oemRes => {
+                    setOemSpec(oemRes.data.data || { f_width: 0, f_profile: 0, f_rim: 0, r_width: 0, r_profile: 0, r_rim: 0 });
+                  });
+                }
+              });
+            }
+          });
+        }
+      }
+    });
+
     return () => { document.body.style.overflow = 'auto'; };
-  }, []);
+  }, [searchParams]);
 
   const handleBrandClick = (b: Brand) => {
     setSelectedBrand(b);

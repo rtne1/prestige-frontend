@@ -155,5 +155,14 @@
     "specs_verification": "سيتم التحقق من المواصفات بدقة بواسطة فريقنا.",
     "oem_mark_title": "اعتماد المصنع OEM (اختياري)",
     "oem_mark_none": "بدون تفضيل"
+  },
+  "garage": {
+    "welcome": "مرحباً",
+    "new_config": "مطابقة جديدة",
+    "my_vehicles": "مركباتي",
+    "empty_garage": "لا توجد مركبات مسجلة في حسابك حالياً.",
+    "active_configs": "الطلبات الحالية",
+    "no_active": "لا توجد طلبات إطارات حالية.",
+    "contact_concierge": "التحدث مع فريق الدعم"
   }
 }

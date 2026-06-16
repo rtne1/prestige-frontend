@@ -155,5 +155,14 @@
     "specs_verification": "Specifications will be verified by our concierge.",
     "oem_mark_title": "OEM Homologation Mark (Optional)",
     "oem_mark_none": "No Preference"
+  },
+  "garage": {
+    "welcome": "Welcome",
+    "new_config": "New Configuration",
+    "my_vehicles": "My Vehicles",
+    "empty_garage": "Your garage is currently empty.",
+    "active_configs": "Active Configurations",
+    "no_active": "No active configurations found.",
+    "contact_concierge": "Contact Concierge"
   }
 }
