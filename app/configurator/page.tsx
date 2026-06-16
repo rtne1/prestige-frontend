@@ -12,17 +12,41 @@ interface Year { id: number; year: number; }
 interface OemSpec { f_width: number; f_profile: number; f_rim: number; r_width: number; r_profile: number; r_rim: number; }
 interface Compound { id: number; model_name: string; specs: any; brand: { name: string; media_id: number | null }; media: { file_path: string } | null; }
 
-// AUTO-TRANSLATOR FOR DATABASE NAMES
+// ENHANCED AUTO-TRANSLATOR
 const translateDB = (text: string, lang: string) => {
   if (lang === "en" || !text) return text;
+  
+  // Create a lowercase map for case-insensitive matching
   const map: Record<string, string> = {
-    'Porsche': 'بورش', 'Mercedes-Benz': 'مرسيدس-بنز', 'BMW': 'بي ام دبليو', 
-    'Lamborghini': 'لامبورجيني', 'Ferrari': 'فيراري', 'Aston Martin': 'أستون مارتن', 
-    'Bentley': 'بنتلي', 'Rolls-Royce': 'رولز رويس', 'Range Rover': 'رنج روفر', 'Land Rover': 'لاند روفر',
-    'Michelin': 'ميشلان', 'Pirelli': 'بيريلي', 'Continental': 'كونتيننتال', 'Bridgestone': 'بريدجستون',
-    'Dunlop': 'دنلوب', 'Goodyear': 'جوديير'
+    // Brands
+    'porsche': 'بورش', 'mercedes-benz': 'مرسيدس-بنز', 'bmw': 'بي ام دبليو', 
+    'lamborghini': 'لامبورجيني', 'ferrari': 'فيراري', 'aston martin': 'أستون مارتن', 
+    'bentley': 'بنتلي', 'rolls-royce': 'رولز رويس', 'range rover': 'رنج روفر', 'land rover': 'لاند روفر',
+    'audi': 'أودي', 'lexus': 'لكزس',
+    // Tire Brands
+    'michelin': 'ميشلان', 'pirelli': 'بيريلي', 'continental': 'كونتيننتال', 'bridgestone': 'بريدجستون',
+    'dunlop': 'دنلوب', 'goodyear': 'جوديير',
+    // Popular Tire Models
+    'pilot sport 4s': 'بايلوت سبورت 4S', 'pilot sport 4': 'بايلوت سبورت 4', 'pilot sport 5': 'بايلوت سبورت 5',
+    'pilot sport 4 suv': 'بايلوت سبورت 4 SUV', 'pilot sport cup 2': 'بايلوت سبورت كاب 2',
+    'p zero': 'بي زيرو', 'p zero (pz4)': 'بي زيرو (PZ4)', 'p zero corsa': 'بي زيرو كورسا',
+    'p zero trofeo r': 'بي زيرو تروفيو R', 'scorpion zero': 'سكوربيون زيرو',
+    'sportcontact 6': 'سبورت كونتاكت 6', 'sportcontact 7': 'سبورت كونتاكت 7'
   };
-  return map[text] || text;
+
+  const lowerText = text.toLowerCase().trim();
+  
+  // Exact Match
+  if (map[lowerText]) return map[lowerText];
+
+  // Partial Match Fallback (Replaces words inside strings)
+  let translatedText = text;
+  for (const [eng, ar] of Object.entries(map)) {
+    const regex = new RegExp(`\\b${eng}\\b`, 'gi');
+    translatedText = translatedText.replace(regex, ar);
+  }
+  
+  return translatedText;
 };
 
 function ConfiguratorContent() {
@@ -49,7 +73,7 @@ function ConfiguratorContent() {
   
   const [selectedTireBrand, setSelectedTireBrand] = useState<string | null>(null);
   const [selectedCompound, setSelectedCompound] = useState<Compound | null>(null);
-  const [selectedOem, setSelectedOem] = useState<string>(""); // OEM Mark
+  const [selectedOem, setSelectedOem] = useState<string>(""); 
   const [tireQty, setTireQty] = useState<string>("");
   const [notes, setNotes] = useState("");
 
@@ -117,7 +141,7 @@ function ConfiguratorContent() {
     if (!selectedModel || !selectedYear || !selectedCompound || !oemSpec || !tireQty) return;
     const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label;
     
-    let text = `${t("configurator.wa_greeting")}\n\n*${t("configurator.vehicle")}:* ${selectedYear.year} ${translateDB(selectedBrand?.name || "", lang)} ${selectedModel.name}\n*${t("configurator.wa_tire")}:* ${translateDB(selectedCompound.brand.name, lang)} ${selectedCompound.model_name}\n*${t("configurator.wa_front")}:* ${oemSpec.f_width}/${oemSpec.f_profile} R${oemSpec.f_rim}\n*${t("configurator.wa_rear")}:* ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.r_rim}\n*${t("configurator.qty_label")}:* ${qtyLabel}`;
+    let text = `${t("configurator.wa_greeting")}\n\n*${t("configurator.vehicle")}:* ${selectedYear.year} ${translateDB(selectedBrand?.name || "", lang)} ${translateDB(selectedModel.name, lang)}\n*${t("configurator.wa_tire")}:* ${translateDB(selectedCompound.brand.name, lang)} ${translateDB(selectedCompound.model_name, lang)}\n*${t("configurator.wa_front")}:* ${oemSpec.f_width}/${oemSpec.f_profile} R${oemSpec.f_rim}\n*${t("configurator.wa_rear")}:* ${oemSpec.r_width}/${oemSpec.r_profile} R${oemSpec.r_rim}\n*${t("configurator.qty_label")}:* ${qtyLabel}`;
     
     if (selectedOem) text += `\n*OEM Mark:* ${selectedOem}`;
     if (notes) text += `\n\n*Notes:* ${notes}`;
@@ -165,14 +189,14 @@ function ConfiguratorContent() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-obsidian text-white overflow-hidden pt-[80px] md:pt-[100px] relative">
       
-      {/* BACKGROUND AMBIENT LIGHTING */}
       <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-crimson/5 blur-[120px] rounded-[100%] pointer-events-none z-0"></div>
 
       {/* ===================== BRAND SELECTION SCREEN ===================== */}
       {phase === "gallery" && !selectedBrand && (
+        // FIX: Added overflow-y-auto so you can always scroll through brands
         <div className="flex-1 w-full flex flex-col items-center justify-start p-6 md:p-12 overflow-y-auto hide-scrollbar animate-[fadeInUp_0.4s_ease-out] z-10 relative">
           
-          <div className="text-center max-w-2xl mx-auto mb-16 mt-8">
+          <div className="text-center max-w-2xl mx-auto mb-16 mt-8 shrink-0">
             <h1 className={`font-cinzel text-4xl md:text-5xl lg:text-6xl text-white mb-6 uppercase tracking-widest drop-shadow-xl ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
               {t("configurator.select_manufacturer")}
             </h1>
@@ -181,34 +205,28 @@ function ConfiguratorContent() {
             </p>
           </div>
 
-          {/* ULTRA-PREMIUM MASONRY / GRID LAYOUT */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 w-full max-w-[1400px] pb-32">
-            {brands.map(b => (
-              <button 
-                key={b.id} 
-                onClick={() => handleBrandClick(b)} 
-                className="group relative h-40 md:h-56 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-carbon/80 to-obsidian border border-white/5 rounded-3xl overflow-hidden flex flex-col items-center justify-center transition-all duration-700 ease-luxury hover:border-crimson/50 hover:shadow-[0_20px_50px_rgba(204,0,0,0.15)] hover:-translate-y-2"
-              >
-                {/* Image without Invert */}
-                {b.media?.file_path ? (
-                  <img 
-                    src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${b.media.file_path}`} 
-                    alt={b.name} 
-                    className="h-16 md:h-24 w-auto object-contain mb-4 transition-transform duration-700 group-hover:scale-110 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] relative z-10" 
-                  />
-                ) : (
-                  <div className="h-16 md:h-24 w-16 md:w-24 bg-white/5 rounded-full mb-4 relative z-10 flex items-center justify-center text-xs text-ash/30">N/A</div>
-                )}
-                
-                {/* Translated Name */}
-                <span className={`text-[10px] md:text-xs uppercase tracking-[0.3em] font-medium text-ash group-hover:text-white transition-colors relative z-10 ${lang === 'ar' ? 'font-cairo tracking-normal font-bold' : ''}`}>
-                  {translateDB(b.name, lang)}
-                </span>
-
-                {/* Subtle Hover Glow */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-crimson/0 group-hover:bg-crimson/20 blur-3xl rounded-full transition-all duration-700 z-0 pointer-events-none"></div>
-              </button>
-            ))}
+          {/* FIX: Redesigned the Manufacturer Grid to exactly match the Models view */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 w-full pb-32">
+            {brands.map(b => {
+              const imageUrl = b.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${b.media.file_path}` : "https://images.unsplash.com/photo-1503376712351-404c0ecbd2b3?q=80&w=1000";
+              return (
+                <div 
+                  key={b.id} 
+                  onClick={() => handleBrandClick(b)} 
+                  className={`relative w-full h-[300px] rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 ease-luxury border border-white/10 hover:border-crimson hover:shadow-[0_0_40px_rgba(204,0,0,0.4)] group`}
+                >
+                  <img src={imageUrl} alt={b.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent pointer-events-none"></div>
+                  
+                  <div className={`absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'right-6 md:right-8 text-start' : 'left-6 md:left-8 text-start'} z-10 w-full pr-16`}>
+                    <p className="text-[10px] uppercase tracking-widest text-crimson mb-1 font-bold">Premium Experience</p>
+                    <h3 className={`font-cinzel text-2xl text-white leading-tight drop-shadow-lg ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
+                      {translateDB(b.name, lang)}
+                    </h3>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -219,7 +237,7 @@ function ConfiguratorContent() {
           
           <div className="px-6 md:px-12 py-4 shrink-0 flex flex-col md:flex-row justify-between items-center gap-4 z-20">
             <div className="flex items-center gap-4">
-              <button onClick={() => { setSelectedBrand(null); setIsDrawerOpen(false); }} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-ash hover:bg-crimson hover:text-white transition-all shadow-lg">
+              <button onClick={() => { setSelectedBrand(null); setIsDrawerOpen(false); }} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-ash hover:bg-crimson hover:text-white transition-all shadow-lg shrink-0">
                  <svg className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               </button>
               <h1 className={`font-cinzel text-2xl md:text-3xl tracking-widest uppercase text-white drop-shadow-md ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>
@@ -234,7 +252,8 @@ function ConfiguratorContent() {
           <div className="relative flex-1 w-full flex overflow-hidden">
             {isDrawerOpen && <div className="absolute inset-0 z-30 hidden md:block cursor-pointer bg-obsidian/60 backdrop-blur-md transition-all" onClick={closeDrawer} />}
 
-            <div className="flex-1 overflow-y-hidden overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none hide-scrollbar px-6 md:px-12 py-4 md:py-8 w-full touch-pan-x overscroll-none">
+            {/* FIX: Changed md:overflow-x-hidden to md:overflow-y-auto so desktop can scroll down the grid! */}
+            <div className="flex-1 overflow-y-hidden overflow-x-auto md:overflow-y-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none hide-scrollbar px-6 md:px-12 py-4 md:py-8 w-full touch-pan-x md:touch-auto overscroll-none">
               <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 pb-32 snap-x snap-mandatory md:snap-none w-full hide-scrollbar">
                 {filteredModels.map(m => {
                   const isActive = selectedModel?.id === m.id;
@@ -245,7 +264,7 @@ function ConfiguratorContent() {
                       <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent pointer-events-none"></div>
                       <div className={`absolute bottom-6 md:bottom-8 ${lang === 'ar' ? 'right-6 md:right-8 text-start' : 'left-6 md:left-8 text-start'} z-10 w-full pr-16`}>
                         <p className="text-[10px] uppercase tracking-widest text-crimson mb-1 font-bold">{translateDB(selectedBrand.name, lang)}</p>
-                        <h3 className={`font-cinzel text-2xl text-white leading-tight drop-shadow-lg ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{m.name}</h3>
+                        <h3 className={`font-cinzel text-2xl text-white leading-tight drop-shadow-lg ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{translateDB(m.name, lang)}</h3>
                       </div>
                     </div>
                   );
@@ -261,7 +280,7 @@ function ConfiguratorContent() {
 
               <div className="flex justify-between items-center px-6 pb-4 lg:p-6 lg:border-b border-white/5 shrink-0 text-start">
                 <div>
-                  <h3 className={`font-cinzel text-xl text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{selectedModel?.name}</h3>
+                  <h3 className={`font-cinzel text-xl text-white ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{translateDB(selectedModel?.name || "", lang)}</h3>
                   <p className={`text-[10px] text-ash uppercase tracking-[0.2em] mt-1 ${lang === 'ar' ? 'font-cairo' : ''}`}>{translateDB(selectedBrand?.name || "", lang)}</p>
                 </div>
                 <button onClick={closeDrawer} className="w-10 h-10 rounded-full bg-white/5 hidden lg:flex items-center justify-center text-ash hover:bg-crimson hover:text-white transition-colors">
@@ -306,7 +325,7 @@ function ConfiguratorContent() {
                             <div className="relative z-10 w-[60%] flex flex-col h-full text-start">
                               <div className="text-start mb-4">
                                 <span className={`text-[9px] uppercase tracking-widest text-ash block mb-1 font-bold ${lang === 'ar' ? 'font-cairo' : ''}`}>{translateDB(c.brand.name, lang)}</span>
-                                <h5 className={`font-cinzel text-lg text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{c.model_name}</h5>
+                                <h5 className={`font-cinzel text-lg text-white leading-tight ${lang === 'ar' ? 'font-cairo font-bold tracking-normal' : ''}`}>{translateDB(c.model_name, lang)}</h5>
                               </div>
                               <div className="flex flex-col gap-2 mt-auto border-t border-white/10 pt-3">
                                   <div className="flex justify-between items-center text-start">
@@ -333,8 +352,7 @@ function ConfiguratorContent() {
                   {selectedCompound && (
                     <div className="animate-[fadeInUp_0.3s_ease-out] mb-12">
                       
-                      {/* OEM SELECTOR ADDED HERE */}
-                      <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_mark_title") || "OEM Homologation"}</h4>
+                      <h4 className={`text-[10px] uppercase tracking-widest text-ash mb-4 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_mark_title")}</h4>
                       <div className="flex flex-wrap gap-2 mb-8">
                         {oemOptions.map(opt => (
                           <button key={opt.id} onClick={() => setSelectedOem(opt.id === selectedOem ? "" : opt.id)} className={`px-4 py-3 rounded-xl border text-xs transition-all duration-300 ${selectedOem === opt.id ? 'bg-crimson border-crimson text-white shadow-[0_0_20px_rgba(204,0,0,0.3)]' : 'bg-obsidian border-white/10 text-ash hover:border-white hover:text-white'}`}>
@@ -369,6 +387,7 @@ function ConfiguratorContent() {
         </div>
       )}
 
+      {/* ===================== REVIEW SUMMARY SCREEN ===================== */}
       {phase === "review" && (
         <div className="absolute inset-0 z-50 bg-obsidian overflow-y-auto px-6 py-12 md:py-24 hide-scrollbar animate-[fadeInUp_0.4s_ease-out]">
           <div className="max-w-2xl mx-auto pb-20 text-start">
@@ -377,7 +396,7 @@ function ConfiguratorContent() {
               <div className="space-y-6 relative z-10">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.vehicle")}</span>
-                  <span className="font-medium text-white">{selectedYear?.year} {translateDB(selectedBrand?.name || "", lang)} {selectedModel?.name}</span>
+                  <span className="font-medium text-white">{selectedYear?.year} {translateDB(selectedBrand?.name || "", lang)} {translateDB(selectedModel?.name || "", lang)}</span>
                 </div>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.oem_fitment")}</span>
@@ -388,7 +407,7 @@ function ConfiguratorContent() {
                 </div>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
                   <span className={`text-[10px] text-ash uppercase tracking-widest ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.compound")}</span>
-                  <span className="font-medium text-crimson">{translateDB(selectedCompound?.brand.name || "", lang)} {selectedCompound?.model_name}</span>
+                  <span className="font-medium text-crimson">{translateDB(selectedCompound?.brand.name || "", lang)} {translateDB(selectedCompound?.model_name || "", lang)}</span>
                 </div>
                 {selectedOem && (
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center border-t border-white/5 pt-6 gap-2">
