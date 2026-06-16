@@ -164,5 +164,21 @@
     "active_configs": "Active Configurations",
     "no_active": "No active configurations found.",
     "contact_concierge": "Contact Concierge"
+  },
+  "account": {
+    "title": "Client Settings",
+    "subtitle": "Manage your personal identification and security credentials.",
+    "success_msg": "Profile updated successfully.",
+    "error_msg": "Failed to update profile.",
+    "personal_title": "Personal Identification",
+    "name_label": "Full Name",
+    "email_label": "Email Address",
+    "phone_label": "Phone Number",
+    "security_title": "Security Credentials",
+    "security_desc": "Leave blank if you do not wish to change your password.",
+    "current_pass": "Current Password",
+    "new_pass": "New Password",
+    "confirm_pass": "Confirm New Password",
+    "save_btn": "Save Modifications"
   }
 }
