@@ -14,21 +14,15 @@ interface Brand { id: number; name: string; }
 interface Model { id: number; name: string; }
 interface Year { id: number; year: number; model: { name: string; brand: { name: string } }; oemSpec: any; }
 
-// --- THE LUXURY FOCUS FILTER ---
-const LUXURY_BRANDS = [
-  "porsche", "mercedes-benz", "bmw", "lamborghini", "ferrari", 
-  "aston martin", "bentley", "rolls-royce", "land rover", "range rover"
-];
-
 // --- MASSIVE LUXURY AUTO-TRANSLATOR ---
 const translateDB = (text: string, lang: string) => {
   if (lang === "en" || !text) return text;
   
   const map: Record<string, string> = {
     // Brands
-    'porsche': 'بورش', 'mercedes-benz': 'مرسيدس-بنز', 'bmw': 'بي ام دبليو', 
+    'porsche': 'بورش', 'mercedes-benz': 'مرسيدس-بنز', 'mercedes': 'مرسيدس', 'bmw': 'بي ام دبليو', 
     'lamborghini': 'لامبورجيني', 'ferrari': 'فيراري', 'aston martin': 'أستون مارتن', 
-    'bentley': 'بنتلي', 'rolls-royce': 'رولز رويس', 'range rover': 'رنج روفر', 'land rover': 'لاند روفر',
+    'bentley': 'بنتلي', 'rolls-royce': 'رولز رويس', 'rolls royce': 'رولز رويس', 'range rover': 'رنج روفر', 'land rover': 'لاند روفر',
     // Porsche Models
     '911': '911', 'cayenne': 'كايين', 'macan': 'ماكان', 'panamera': 'باناميرا', 'taycan': 'تايكان', 'carrera': 'كاريرا',
     // Mercedes Models
@@ -49,7 +43,6 @@ const translateDB = (text: string, lang: string) => {
   if (map[lowerText]) return map[lowerText];
   
   let translatedText = text;
-  // Deep replacement for complex strings (e.g. "Porsche Cayenne Turbo")
   for (const [eng, ar] of Object.entries(map)) {
     const regex = new RegExp(`\\b${eng}\\b`, 'gi');
     translatedText = translatedText.replace(regex, ar);
@@ -118,13 +111,28 @@ function OrderVehicleContent() {
     
     api.get(`/compounds/${tireId}`).then(res => setTire(res.data.data)).catch(() => router.push("/"));
     
-    api.get("/vehicles/brands").then(res => {
-      // STRICT FILTER: Only allow the 9 requested luxury brands
-      const filteredBrands = res.data.data.filter((b: Brand) => 
-        LUXURY_BRANDS.includes(b.name.toLowerCase())
-      );
-      setBrands(filteredBrands);
-    });
+    // FETCH BRANDS FIX
+    api.get("/vehicles/brands")
+      .then(res => {
+        // Extract array from response safely
+        const allBrands: Brand[] = res.data?.data || res.data || [];
+        
+        // FORGIVING FILTER: Only needs to contain the keyword
+        const luxuryKeywords = ["porsche", "mercedes", "bmw", "lamborghini", "ferrari", "aston", "bentley", "rolls", "range", "land"];
+        
+        let filteredBrands = allBrands.filter((b) => {
+            const nameLower = (b.name || "").toLowerCase();
+            return luxuryKeywords.some(kw => nameLower.includes(kw));
+        });
+
+        // FAILSAFE FALLBACK: If the filter hides everything (e.g., weird DB naming), just show all brands
+        if (filteredBrands.length === 0) {
+            filteredBrands = allBrands;
+        }
+
+        setBrands(filteredBrands);
+      })
+      .catch(err => console.error("Error fetching brands:", err));
   }, [tireId, router]);
 
   // Smart Search Trigger
@@ -136,7 +144,7 @@ function OrderVehicleContent() {
     setIsSearching(true);
     searchTimeoutRef.current = setTimeout(() => {
       api.get(`/vehicles/search?query=${encodeURIComponent(searchQuery)}`)
-        .then(res => setSearchResults(res.data.data))
+        .then(res => setSearchResults(res.data?.data || []))
         .finally(() => setIsSearching(false));
     }, 400);
   }, [searchQuery, tab]);
@@ -147,9 +155,9 @@ function OrderVehicleContent() {
     if(!id) return;
     setIsFetchingDropdown(true);
     api.get(`/vehicles/brands/${id}/models`).then(res => {
-        setModels(res.data.data);
+        setModels(res.data?.data || []);
         setIsFetchingDropdown(false);
-    });
+    }).catch(() => setIsFetchingDropdown(false));
   };
   
   const handleModelChange = (id: number) => {
@@ -159,12 +167,13 @@ function OrderVehicleContent() {
     const brandName = brands.find(b => b.id === id)?.name || "";
     
     api.get(`/vehicles/models/${id}/years`).then(res => {
-      const mappedYears = res.data.data.map((y: any) => ({
+      const fetchedYears = res.data?.data || [];
+      const mappedYears = fetchedYears.map((y: any) => ({
         ...y, model: { name: models.find(m => m.id === id)?.name, brand: { name: brandName } }
       }));
       setYears(mappedYears);
       setIsFetchingDropdown(false);
-    });
+    }).catch(() => setIsFetchingDropdown(false));
   };
 
   const selectVehicle = (v: VehicleResult) => {
@@ -197,7 +206,7 @@ function OrderVehicleContent() {
             // Reset for next potential order
             setStep(1); setSelectedVehicle(null); setTireQty(""); setSelectedOem(""); setNotes("");
         }, 1500);
-    }, 800); // Artificial delay for premium feel
+    }, 800);
   };
 
   const tireImg = tire?.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${tire.media.file_path}` : null;
@@ -217,7 +226,6 @@ function OrderVehicleContent() {
         {/* LEFT COLUMN: DOSSIER    */}
         {/* ======================= */}
         <div className="bg-gradient-to-b from-carbon/80 to-obsidian/90 backdrop-blur-3xl border border-white/10 p-8 lg:p-10 rounded-[2rem] lg:sticky lg:top-32 flex flex-col shadow-[0_30px_60px_rgba(0,0,0,0.8)] overflow-hidden relative group">
-          {/* Glass glare effect */}
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           
           <div className="relative z-10 flex flex-col items-center border-b border-white/10 pb-8 mb-8">
@@ -333,8 +341,8 @@ function OrderVehicleContent() {
                     {/* Brand Select */}
                     <div className="relative">
                         <select value={selBrand || ""} onChange={(e) => handleBrandChange(Number(e.target.value))} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                            <option value="" disabled>{t("order.select_brand") || "Select Premium Brand"}</option>
-                            {brands.map(b => <option key={b.id} value={b.id}>{translateDB(b.name, lang)}</option>)}
+                            <option value="" disabled className="text-black bg-white">{t("order.select_brand") || "Select Premium Brand"}</option>
+                            {brands.map(b => <option key={b.id} value={b.id} className="text-black bg-white">{translateDB(b.name, lang)}</option>)}
                         </select>
                         <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} pointer-events-none`}>
                             <svg className="w-4 h-4 text-ash" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -345,8 +353,8 @@ function OrderVehicleContent() {
                     {selBrand && (
                       <div className="relative animate-[fadeIn_0.3s_ease-out]">
                         <select value={selModel || ""} onChange={(e) => handleModelChange(Number(e.target.value))} disabled={isFetchingDropdown} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors disabled:opacity-50 ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                            <option value="" disabled>{isFetchingDropdown ? "Loading..." : (t("order.select_model") || "Select Model")}</option>
-                            {models.map(m => <option key={m.id} value={m.id}>{translateDB(m.name, lang)}</option>)}
+                            <option value="" disabled className="text-black bg-white">{isFetchingDropdown ? "Loading..." : (t("order.select_model") || "Select Model")}</option>
+                            {models.map(m => <option key={m.id} value={m.id} className="text-black bg-white">{translateDB(m.name, lang)}</option>)}
                         </select>
                         <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} pointer-events-none`}>
                             {isFetchingDropdown ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <svg className="w-4 h-4 text-ash" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>}
