@@ -5,7 +5,12 @@
     "garage": "My Vehicles",
     "account": "My Account",
     "sign_out": "Sign Out",
-    "client_portal": "Sign In"
+    "client_portal": "Sign In",
+    "tab_active": "Active Orders",
+    "tab_history": "Order History",
+    "no_history": "You have no previous orders.",
+    "status_completed": "Completed",
+    "status_canceled": "Canceled"
   },
   "home": {
     "title_1": "PREMIUM",

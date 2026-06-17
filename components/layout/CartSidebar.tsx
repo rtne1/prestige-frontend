@@ -21,9 +21,37 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
   const WHATSAPP_NUMBER = "966568890653";
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
+    // 1. Silent Sync to Database if Logged In!
+    if (user) {
+      try {
+        setIsSubmitting(true);
+        for (const item of cart) {
+          let vehId = null;
+          if (item.vehicle) {
+            const vehRes = await api.post("/garage/vehicles", { vehicle_year_id: item.vehicle.id, nickname: null });
+            vehId = vehRes.data.data.id;
+          }
+          let combinedNotes = `[Checkout: WhatsApp]\n[Qty: ${item.qtyLabel}]`;
+          if (item.oemMark) combinedNotes += `\n[OEM: ${item.oemMark}]`;
+          if (item.notes) combinedNotes += `\n\n${item.notes}`;
+
+          await api.post("/garage/requests", {
+            user_vehicle_id: vehId,
+            compound_id: item.compound.id,
+            ...item.vehicle?.oemSpec,
+            client_notes: combinedNotes
+          });
+        }
+      } catch (e) {
+        console.error("Silent Sync Failed", e);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+
+    // 2. Format and open WhatsApp
     let text = `${t("configurator.wa_greeting") || "Hello Mr. Tires, I would like to order the following items:"}\n\n`;
-    
     cart.forEach((item, index) => {
       text += `*--- Item ${index + 1} ---*\n`;
       if (item.vehicle) text += `*Vehicle:* ${item.vehicle.year} ${item.vehicle.model.brand.name} ${item.vehicle.model.name}\n`;
@@ -37,46 +65,9 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank");
     clearCart();
     onClose();
+    if (user) router.push("/garage"); // Take them to the garage so they see it saved!
   };
-
-  const handleCheckout = async () => {
-    if (!user) {
-      router.push("/auth");
-      onClose();
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      for (const item of cart) {
-        let vehId = null;
-        if (item.vehicle) {
-          const vehRes = await api.post("/garage/vehicles", { vehicle_year_id: item.vehicle.id, nickname: null });
-          vehId = vehRes.data.data.id;
-        }
-
-        let combinedNotes = `[Qty: ${item.qtyLabel}]`;
-        if (item.oemMark) combinedNotes += `\n[OEM Preference: ${item.oemMark}]`;
-        if (item.notes) combinedNotes += `\n\n${item.notes}`;
-
-        await api.post("/garage/requests", {
-          user_vehicle_id: vehId,
-          compound_id: item.compound.id,
-          ...item.vehicle?.oemSpec,
-          client_notes: combinedNotes
-        });
-      }
-
-      clearCart();
-      router.push("/garage");
-      onClose();
-    } catch (error) {
-      alert("Checkout failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+  
   return (
     <>
       {isOpen && (

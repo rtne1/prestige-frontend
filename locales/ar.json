@@ -5,7 +5,12 @@
     "garage": "سياراتي",
     "account": "حسابي",
     "sign_out": "تسجيل الخروج",
-    "client_portal": "تسجيل الدخول"
+    "client_portal": "تسجيل الدخول",
+    "tab_active": "الطلبات الحالية",
+    "tab_history": "سجل الطلبات السابقة",
+    "no_history": "لا توجد طلبات سابقة في سجلك.",
+    "status_completed": "مكتمل",
+    "status_canceled": "ملغي"
   },
   "home": {
     "title_1": "أداء",
