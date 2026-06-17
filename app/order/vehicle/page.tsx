@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCart } from "@/contexts/CartContext"; // <-- ADDED THIS IMPORT!
+import { useCart } from "@/contexts/CartContext";
 import api from "@/lib/api";
 
 interface Tire { id: number; model_name: string; specs: any; brand: { name: string }; media: { file_path: string } | null; }
@@ -16,7 +16,7 @@ function OrderVehicleContent() {
   const tireId = searchParams.get("tire_id");
   const { user } = useAuth();
   const { t, lang } = useLanguage();
-  const { addToCart } = useCart(); // <-- ADDED THIS HOOK!
+  const { addToCart } = useCart();
 
   const [tire, setTire] = useState<Tire | null>(null);
   const [tab, setTab] = useState<"search" | "manual">("search");
@@ -92,6 +92,29 @@ function OrderVehicleContent() {
     setSelectedVehicle(v);
     setStep(2); 
     window.scrollTo({ top: window.innerHeight / 2, behavior: "smooth" });
+  };
+
+  const handleAddToCart = () => {
+    const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label || "";
+    addToCart({
+      id: Date.now().toString(),
+      compound: tire,
+      quantity: tireQty,
+      qtyLabel,
+      oemMark: selectedOem,
+      vehicle: selectedVehicle,
+      notes
+    });
+    
+    // Reset Form
+    setStep(1);
+    setSelectedVehicle(null);
+    setTireQty("");
+    setSelectedOem("");
+    setNotes("");
+    
+    // Trigger Global Event
+    window.dispatchEvent(new Event('open-cart-drawer'));
   };
 
   const tireImg = tire?.media?.file_path ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${tire.media.file_path}` : null;
@@ -256,34 +279,7 @@ function OrderVehicleContent() {
                 </div>
 
                 <button 
-                  onClick={() => {
-                    const qtyLabel = qtyOptions.find(o => o.id === tireQty)?.label || "";
-                    addToCart({
-                      id: Date.now().toString(),
-                      compound: tire,
-                      quantity: tireQty,
-                      qtyLabel,
-                      oemMark: selectedOem,
-                      vehicle: selectedVehicle,
-                      notes
-                    });
-                    
-                    // NEW: INSTANT CART OPEN! (No ugly alert popups)
-                    import('@/contexts/CartContext').then(({ useCart }) => {
-                       // Handled by context natively now
-                    });
-                    
-                    // Reset the form so they can add another tire
-                    setStep(1);
-                    setSelectedVehicle(null);
-                    setTireQty("");
-                    setSelectedOem("");
-                    setNotes("");
-                    
-                    // Fire global event to open the Navbar Cart
-                    const event = new Event('open-cart-drawer');
-                    window.dispatchEvent(event);
-                  }} 
+                  onClick={handleAddToCart} 
                   disabled={!tireQty} 
                   className={`w-full bg-white text-obsidian px-6 py-5 rounded-2xl uppercase tracking-widest text-sm font-bold hover:bg-crimson hover:text-white transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
                 >

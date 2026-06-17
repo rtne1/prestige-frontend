@@ -14,24 +14,30 @@ export function Navbar() {
   const { user, isLoading, logout } = useAuth();
   const { t, lang, toggleLanguage } = useLanguage();
   
-  // USING THE NEW GLOBAL CART STATE
   const { cartTotalItems, isCartOpen, openCart, closeCart } = useCart(); 
   const pathname = usePathname();
 
+  // Reset menu and cart ONLY when changing pages
   useEffect(() => {
     setMenuOpen(false);
     closeCart();
     document.body.style.overflow = "auto";
-  const handleOpenDrawer = () => openCart();
-    window.addEventListener('open-cart-drawer', handleOpenDrawer);
-    return () => window.removeEventListener('open-cart-drawer', handleOpenDrawer);
-  }, [pathname, openCart, closeCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
+  // Handle Scroll Transparency
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // THE FIX: Independent listener for the Add To Cart button
+  useEffect(() => {
+    const handleOpenDrawer = () => openCart();
+    window.addEventListener('open-cart-drawer', handleOpenDrawer);
+    return () => window.removeEventListener('open-cart-drawer', handleOpenDrawer);
+  }, [openCart]);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -51,7 +57,7 @@ export function Navbar() {
               {lang === "en" ? "العربية" : "EN"}
             </button>
 
-            {/* OPEN CART BUTTON */}
+            {/* CART ICON */}
             <button onClick={openCart} className="relative text-ash hover:text-white transition-colors p-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
               {cartTotalItems > 0 && (
@@ -90,7 +96,6 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* RENDER THE SIDEBAR COMPONENT USING CONTEXT STATE */}
       <CartSidebar isOpen={isCartOpen} onClose={closeCart} />
 
       <div className={`fixed inset-0 bg-obsidian/95 backdrop-blur-2xl z-50 flex flex-col items-center justify-center transition-all duration-500 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>

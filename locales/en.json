@@ -176,7 +176,12 @@
     "empty_garage": "Your garage is currently empty.",
     "active_configs": "Active Configurations",
     "no_active": "No active configurations found.",
-    "contact_concierge": "Contact Concierge"
+    "contact_concierge": "Contact Concierge",
+    "tab_active": "Active Orders",
+    "tab_history": "Order History",
+    "no_history": "You have no previous orders.",
+    "status_completed": "Completed",
+    "status_canceled": "Canceled"
   },
   "account": {
     "title": "Client Settings",

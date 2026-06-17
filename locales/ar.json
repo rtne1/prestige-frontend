@@ -176,7 +176,12 @@
     "empty_garage": "لا توجد مركبات مسجلة في حسابك حالياً.",
     "active_configs": "الطلبات الحالية",
     "no_active": "لا توجد طلبات إطارات حالية.",
-    "contact_concierge": "التحدث مع فريق الدعم"
+    "contact_concierge": "التحدث مع فريق الدعم",
+    "tab_active": "الطلبات الحالية",
+    "tab_history": "سجل الطلبات السابقة",
+    "no_history": "لا توجد طلبات سابقة في سجلك.",
+    "status_completed": "مكتمل",
+    "status_canceled": "ملغي"
   },
   "account": {
     "title": "إعدادات الحساب",
