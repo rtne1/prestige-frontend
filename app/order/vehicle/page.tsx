@@ -10,32 +10,21 @@ import api from "@/lib/api";
 // --- TYPES ---
 interface Tire { id: number; model_name: string; specs: any; brand: { name: string }; media: { file_path: string } | null; }
 interface VehicleResult { id: number; year: number; model: { name: string; brand: { name: string } }; oemSpec: any; }
-interface Brand { id: number; name: string; }
-interface Model { id: number; name: string; }
-interface Year { id: number; year: number; model: { name: string; brand: { name: string } }; oemSpec: any; }
 
 // --- MASSIVE LUXURY AUTO-TRANSLATOR ---
 const translateDB = (text: string, lang: string) => {
   if (lang === "en" || !text) return text;
   
   const map: Record<string, string> = {
-    // Brands
     'porsche': 'بورش', 'mercedes-benz': 'مرسيدس-بنز', 'mercedes': 'مرسيدس', 'bmw': 'بي ام دبليو', 
     'lamborghini': 'لامبورجيني', 'ferrari': 'فيراري', 'aston martin': 'أستون مارتن', 
     'bentley': 'بنتلي', 'rolls-royce': 'رولز رويس', 'rolls royce': 'رولز رويس', 'range rover': 'رنج روفر', 'land rover': 'لاند روفر',
-    // Porsche Models
     '911': '911', 'cayenne': 'كايين', 'macan': 'ماكان', 'panamera': 'باناميرا', 'taycan': 'تايكان', 'carrera': 'كاريرا',
-    // Mercedes Models
     'g-class': 'جي كلاس', 's-class': 'اس كلاس', 'c-class': 'سي كلاس', 'e-class': 'اي كلاس', 'maybach': 'مايباخ', 'amg': 'اي ام جي',
-    // Lamborghini Models
     'urus': 'اوروس', 'huracan': 'هوراكان', 'aventador': 'افينتادور', 'revuelto': 'ريفولتو',
-    // Rolls Royce & Bentley Models
     'phantom': 'فانتوم', 'ghost': 'جوست', 'cullinan': 'كولينان', 'bentayga': 'بنتايجا', 'continental': 'كونتيننتال',
-    // Aston Martin Models
     'vantage': 'فانتاج', 'dbx': 'دي بي اكس', 'valkyrie': 'فالكيري',
-    // Range Rover Models
     'defender': 'ديفندر', 'evoque': 'ايفوك', 'velar': 'فيلار', 'sport': 'سبورت',
-    // Tire Brands
     'michelin': 'ميشلان', 'pirelli': 'بيريلي', 'continental tire': 'كونتيننتال', 'bridgestone': 'بريدجستون',
   };
 
@@ -69,14 +58,12 @@ function OrderVehicleContent() {
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Manual Selection States
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [models, setModels] = useState<Model[]>([]);
-  const [years, setYears] = useState<Year[]>([]);
-  
+  // Manual Selection States (EXACTLY LIKE YOUR ORIGINAL)
+  const [brands, setBrands] = useState<any[]>([]);
+  const [models, setModels] = useState<any[]>([]);
+  const [years, setYears] = useState<any[]>([]);
   const [selBrand, setSelBrand] = useState<number | null>(null);
   const [selModel, setSelModel] = useState<number | null>(null);
-  const [isFetchingDropdown, setIsFetchingDropdown] = useState(false);
 
   // Order Details States
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleResult | null>(null);
@@ -105,34 +92,14 @@ function OrderVehicleContent() {
     { id: "LR", label: "LR (Land Rover)", desc: "Range Rover Approved" },
   ];
 
-  // Fetch initial data
+  // Fetch initial data (YOUR ORIGINAL LOGIC)
   useEffect(() => {
     if (!tireId) { router.push("/"); return; }
     
     api.get(`/compounds/${tireId}`).then(res => setTire(res.data.data)).catch(() => router.push("/"));
     
-    // FETCH BRANDS FIX
-    api.get("/vehicles/brands")
-      .then(res => {
-        // Extract array from response safely
-        const allBrands: Brand[] = res.data?.data || res.data || [];
-        
-        // FORGIVING FILTER: Only needs to contain the keyword
-        const luxuryKeywords = ["porsche", "mercedes", "bmw", "lamborghini", "ferrari", "aston", "bentley", "rolls", "range", "land"];
-        
-        let filteredBrands = allBrands.filter((b) => {
-            const nameLower = (b.name || "").toLowerCase();
-            return luxuryKeywords.some(kw => nameLower.includes(kw));
-        });
-
-        // FAILSAFE FALLBACK: If the filter hides everything (e.g., weird DB naming), just show all brands
-        if (filteredBrands.length === 0) {
-            filteredBrands = allBrands;
-        }
-
-        setBrands(filteredBrands);
-      })
-      .catch(err => console.error("Error fetching brands:", err));
+    // EXACTLY as you had it
+    api.get("/vehicles/brands").then(res => setBrands(res.data.data));
   }, [tireId, router]);
 
   // Smart Search Trigger
@@ -144,42 +111,32 @@ function OrderVehicleContent() {
     setIsSearching(true);
     searchTimeoutRef.current = setTimeout(() => {
       api.get(`/vehicles/search?query=${encodeURIComponent(searchQuery)}`)
-        .then(res => setSearchResults(res.data?.data || []))
+        .then(res => setSearchResults(res.data.data))
         .finally(() => setIsSearching(false));
     }, 400);
   }, [searchQuery, tab]);
 
-  // Dropdown Handlers
+  // Dropdown Handlers (YOUR ORIGINAL LOGIC)
   const handleBrandChange = (id: number) => {
     setSelBrand(id); setSelModel(null); setYears([]); setSelectedVehicle(null);
-    if(!id) return;
-    setIsFetchingDropdown(true);
-    api.get(`/vehicles/brands/${id}/models`).then(res => {
-        setModels(res.data?.data || []);
-        setIsFetchingDropdown(false);
-    }).catch(() => setIsFetchingDropdown(false));
+    api.get(`/vehicles/brands/${id}/models`).then(res => setModels(res.data.data));
   };
   
   const handleModelChange = (id: number) => {
     setSelModel(id); setSelectedVehicle(null);
-    if(!id) return;
-    setIsFetchingDropdown(true);
     const brandName = brands.find(b => b.id === id)?.name || "";
-    
     api.get(`/vehicles/models/${id}/years`).then(res => {
-      const fetchedYears = res.data?.data || [];
-      const mappedYears = fetchedYears.map((y: any) => ({
+      const mappedYears = res.data.data.map((y: any) => ({
         ...y, model: { name: models.find(m => m.id === id)?.name, brand: { name: brandName } }
       }));
       setYears(mappedYears);
-      setIsFetchingDropdown(false);
-    }).catch(() => setIsFetchingDropdown(false));
+    });
   };
 
   const selectVehicle = (v: VehicleResult) => {
     setSelectedVehicle(v);
     setStep(2); 
-    setSearchQuery(""); // clear search
+    setSearchQuery(""); 
     window.scrollTo({ top: window.innerHeight / 3, behavior: "smooth" });
   };
 
@@ -335,14 +292,14 @@ function OrderVehicleContent() {
                   </div>
                 )}
 
-                {/* MANUAL SELECTION */}
+                {/* MANUAL SELECTION - EXACTLY AS ORIGINAL */}
                 {tab === "manual" && (
                   <div className="space-y-4">
                     {/* Brand Select */}
                     <div className="relative">
-                        <select value={selBrand || ""} onChange={(e) => handleBrandChange(Number(e.target.value))} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                            <option value="" disabled className="text-black bg-white">{t("order.select_brand") || "Select Premium Brand"}</option>
-                            {brands.map(b => <option key={b.id} value={b.id} className="text-black bg-white">{translateDB(b.name, lang)}</option>)}
+                        <select onChange={(e) => handleBrandChange(Number(e.target.value))} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                            <option value="">{t("order.select_brand") || "Select Premium Brand"}</option>
+                            {brands.map(b => <option key={b.id} value={b.id}>{translateDB(b.name, lang)}</option>)}
                         </select>
                         <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} pointer-events-none`}>
                             <svg className="w-4 h-4 text-ash" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -352,18 +309,18 @@ function OrderVehicleContent() {
                     {/* Model Select */}
                     {selBrand && (
                       <div className="relative animate-[fadeIn_0.3s_ease-out]">
-                        <select value={selModel || ""} onChange={(e) => handleModelChange(Number(e.target.value))} disabled={isFetchingDropdown} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors disabled:opacity-50 ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                            <option value="" disabled className="text-black bg-white">{isFetchingDropdown ? "Loading..." : (t("order.select_model") || "Select Model")}</option>
-                            {models.map(m => <option key={m.id} value={m.id} className="text-black bg-white">{translateDB(m.name, lang)}</option>)}
+                        <select onChange={(e) => handleModelChange(Number(e.target.value))} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                            <option value="">{t("order.select_model") || "Select Model"}</option>
+                            {models.map(m => <option key={m.id} value={m.id}>{translateDB(m.name, lang)}</option>)}
                         </select>
                         <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} pointer-events-none`}>
-                            {isFetchingDropdown ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <svg className="w-4 h-4 text-ash" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>}
+                            <svg className="w-4 h-4 text-ash" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                         </div>
                       </div>
                     )}
 
                     {/* Year Select */}
-                    {selModel && years.length > 0 && !isFetchingDropdown && (
+                    {selModel && years.length > 0 && (
                       <div className="pt-4 animate-[fadeInUp_0.4s_ease-out]">
                         <span className={`text-[10px] uppercase tracking-widest text-ash mb-4 block px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>Select Production Year</span>
                         <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
