@@ -21,8 +21,8 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
   const WHATSAPP_NUMBER = "966568890653";
 
+  // 1. WhatsApp Checkout (With Silent Sync)
   const handleWhatsApp = async () => {
-    // 1. Silent Sync to Database if Logged In!
     if (user) {
       try {
         setIsSubmitting(true);
@@ -50,7 +50,6 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       }
     }
 
-    // 2. Format and open WhatsApp
     let text = `${t("configurator.wa_greeting") || "Hello Mr. Tires, I would like to order the following items:"}\n\n`;
     cart.forEach((item, index) => {
       text += `*--- Item ${index + 1} ---*\n`;
@@ -65,9 +64,48 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank");
     clearCart();
     onClose();
-    if (user) router.push("/garage"); // Take them to the garage so they see it saved!
+    if (user) router.push("/garage");
   };
-  
+
+  // 2. Dashboard Checkout (Vault)
+  const handleCheckout = async () => {
+    if (!user) {
+      router.push("/auth");
+      onClose();
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      for (const item of cart) {
+        let vehId = null;
+        if (item.vehicle) {
+          const vehRes = await api.post("/garage/vehicles", { vehicle_year_id: item.vehicle.id, nickname: null });
+          vehId = vehRes.data.data.id;
+        }
+
+        let combinedNotes = `[Qty: ${item.qtyLabel}]`;
+        if (item.oemMark) combinedNotes += `\n[OEM Preference: ${item.oemMark}]`;
+        if (item.notes) combinedNotes += `\n\n${item.notes}`;
+
+        await api.post("/garage/requests", {
+          user_vehicle_id: vehId,
+          compound_id: item.compound.id,
+          ...item.vehicle?.oemSpec,
+          client_notes: combinedNotes
+        });
+      }
+
+      clearCart();
+      router.push("/garage");
+      onClose();
+    } catch (error) {
+      alert("Checkout failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <>
       {isOpen && (
@@ -115,7 +153,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
         {cart.length > 0 && (
           <div className="p-6 border-t border-white/10 bg-obsidian flex flex-col gap-3">
-            <button onClick={handleWhatsApp} className={`w-full bg-[#25D366] text-obsidian py-4 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-3 ${lang === 'ar' ? 'font-cairo' : ''}`}>
+            <button onClick={handleWhatsApp} disabled={isSubmitting} className={`w-full bg-[#25D366] text-obsidian py-4 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-3 ${lang === 'ar' ? 'font-cairo' : ''}`}>
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.124.553 4.195 1.603 6.015L.175 24l6.105-1.597c1.761.954 3.743 1.458 5.751 1.458 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm0 21.907c-1.808 0-3.582-.486-5.13-1.405l-.368-.218-3.811.996.996-3.811-.218-.368c-.919-1.548-1.405-3.322-1.405-5.13 0-5.546 4.514-10.06 10.06-10.06 5.546 0 10.06 4.514 10.06 10.06 0 5.546-4.514 10.06-10.06 10.06z"/></svg>
               {t("cart.checkout_wa")}
             </button>
