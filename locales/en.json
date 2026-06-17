@@ -95,7 +95,7 @@
     "email_title": "Email",
     "email_desc": "For formal requests",
     "email_btn": "Compose Email",
-    "hours": "Operating Hours: Monday – Saturday, 09:00 – 19:00 (KSA Time)"
+    "hours": "---------------------------------------------"
   },
   "auth": {
     "title": "Authenticate",
