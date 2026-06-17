@@ -6,22 +6,26 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
-import { CartSidebar } from "./CartSidebar"; // <-- NEW IMPORT
+import { CartSidebar } from "./CartSidebar";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false); // <-- NEW STATE
   const { user, isLoading, logout } = useAuth();
   const { t, lang, toggleLanguage } = useLanguage();
-  const { cartTotalItems } = useCart(); // <-- READ CART TOTAL
+  
+  // USING THE NEW GLOBAL CART STATE
+  const { cartTotalItems, isCartOpen, openCart, closeCart } = useCart(); 
   const pathname = usePathname();
 
   useEffect(() => {
     setMenuOpen(false);
-    setCartOpen(false);
+    closeCart();
     document.body.style.overflow = "auto";
-  }, [pathname]);
+  const handleOpenDrawer = () => openCart();
+    window.addEventListener('open-cart-drawer', handleOpenDrawer);
+    return () => window.removeEventListener('open-cart-drawer', handleOpenDrawer);
+  }, [pathname, openCart, closeCart]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -38,19 +42,17 @@ export function Navbar() {
     <>
       <nav className={`fixed top-0 w-full z-[60] transition-all duration-500 ease-luxury ${pathname === '/configurator' ? 'bg-transparent py-4 md:py-6 border-none' : scrolled || menuOpen ? 'bg-obsidian/90 backdrop-blur-md py-4 md:py-6 border-b border-glass' : 'bg-transparent py-6 md:py-8 border-none'}`}>
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 flex justify-between items-center w-full">
-          
           <Link href="/" className="font-cinzel text-lg md:text-xl tracking-[0.2em] font-semibold text-white relative z-[60] whitespace-nowrap shrink-0 flex-none">
             MR. TIRES<span className="text-crimson">.</span>
           </Link>
 
           <div className="flex items-center gap-4 md:gap-8 relative z-[60]">
-            
             <button onClick={toggleLanguage} className="text-[10px] md:text-xs font-semibold tracking-widest text-ash hover:text-white transition-colors border border-glass px-3 py-1.5 rounded-md shrink-0 bg-white/[0.02] backdrop-blur-sm">
               {lang === "en" ? "العربية" : "EN"}
             </button>
 
-            {/* CART ICON */}
-            <button onClick={() => setCartOpen(true)} className="relative text-ash hover:text-white transition-colors p-2">
+            {/* OPEN CART BUTTON */}
+            <button onClick={openCart} className="relative text-ash hover:text-white transition-colors p-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
               {cartTotalItems > 0 && (
                 <span className="absolute top-0 right-0 bg-crimson text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -88,10 +90,9 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* RENDER THE SIDEBAR COMPONENT */}
-      <CartSidebar isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+      {/* RENDER THE SIDEBAR COMPONENT USING CONTEXT STATE */}
+      <CartSidebar isOpen={isCartOpen} onClose={closeCart} />
 
-      {/* Mobile Menu Overlay... (keep your existing mobile menu code here) */}
       <div className={`fixed inset-0 bg-obsidian/95 backdrop-blur-2xl z-50 flex flex-col items-center justify-center transition-all duration-500 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
         <div className="flex flex-col items-center gap-8 w-full px-6">
           <Link href="/configurator" onClick={toggleMenu} className={`relative flex flex-col items-center justify-center w-full max-w-xs bg-gradient-to-r from-carbon to-obsidian border border-crimson/50 text-white py-6 px-4 rounded-[2rem] shadow-[0_10px_40px_rgba(204,0,0,0.2)] transition-all duration-500 delay-100 ${menuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>

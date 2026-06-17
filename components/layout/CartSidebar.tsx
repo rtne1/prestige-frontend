@@ -21,7 +21,6 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
   const WHATSAPP_NUMBER = "966568890653";
 
-  // 1. WhatsApp Checkout (With Silent Sync)
   const handleWhatsApp = async () => {
     if (user) {
       try {
@@ -39,7 +38,12 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
           await api.post("/garage/requests", {
             user_vehicle_id: vehId,
             compound_id: item.compound.id,
-            ...item.vehicle?.oemSpec,
+            f_width: item.vehicle?.oemSpec?.f_width || 0,
+            f_profile: item.vehicle?.oemSpec?.f_profile || 0,
+            f_rim: item.vehicle?.oemSpec?.f_rim || 0,
+            r_width: item.vehicle?.oemSpec?.r_width || 0,
+            r_profile: item.vehicle?.oemSpec?.r_profile || 0,
+            r_rim: item.vehicle?.oemSpec?.r_rim || 0,
             client_notes: combinedNotes
           });
         }
@@ -67,7 +71,6 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     if (user) router.push("/garage");
   };
 
-  // 2. Dashboard Checkout (Vault)
   const handleCheckout = async () => {
     if (!user) {
       router.push("/auth");
@@ -88,10 +91,16 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         if (item.oemMark) combinedNotes += `\n[OEM Preference: ${item.oemMark}]`;
         if (item.notes) combinedNotes += `\n\n${item.notes}`;
 
+        // CRITICAL BUG FIX: Always supply 0 if missing so the API validation doesn't crash!
         await api.post("/garage/requests", {
           user_vehicle_id: vehId,
           compound_id: item.compound.id,
-          ...item.vehicle?.oemSpec,
+          f_width: item.vehicle?.oemSpec?.f_width || 0,
+          f_profile: item.vehicle?.oemSpec?.f_profile || 0,
+          f_rim: item.vehicle?.oemSpec?.f_rim || 0,
+          r_width: item.vehicle?.oemSpec?.r_width || 0,
+          r_profile: item.vehicle?.oemSpec?.r_profile || 0,
+          r_rim: item.vehicle?.oemSpec?.r_rim || 0,
           client_notes: combinedNotes
         });
       }
@@ -100,7 +109,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       router.push("/garage");
       onClose();
     } catch (error) {
-      alert("Checkout failed. Please try again.");
+      alert(t("cart.checkout_failed") || "Checkout failed. Please verify your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -159,6 +168,11 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             </button>
             <button onClick={handleCheckout} disabled={isSubmitting} className={`w-full bg-crimson text-white py-4 rounded-xl uppercase tracking-widest text-xs font-bold hover:bg-white hover:text-obsidian transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>
               {isSubmitting ? "..." : (user ? t("cart.checkout_vault") : t("cart.auth_req"))}
+            </button>
+            
+            {/* CONTINUE SHOPPING BUTTON */}
+            <button onClick={onClose} className={`w-full bg-transparent border border-white/20 text-white py-4 rounded-xl uppercase tracking-widest text-[10px] font-bold hover:bg-white/10 transition-all mt-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>
+              {t("cart.continue_shopping")}
             </button>
           </div>
         )}

@@ -197,13 +197,15 @@
   "cart": {
     "title": "Your Cart",
     "empty": "Your cart is currently empty.",
-    "add_success": "Added to your cart successfully.",
+    "add_success": "Item added successfully.",
     "remove": "Remove",
     "checkout_wa": "Checkout via WhatsApp",
     "checkout_vault": "Submit to Dashboard",
     "auth_req": "Login to Submit",
     "qty": "Qty",
     "oem": "OEM",
-    "add_to_cart": "Add to Cart"
+    "add_to_cart": "Add to Cart",
+    "continue_shopping": "Continue Shopping",
+    "checkout_failed": "Checkout failed. Please verify your connection and try again."
   }
 }

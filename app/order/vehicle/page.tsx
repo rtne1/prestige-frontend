@@ -268,7 +268,10 @@ function OrderVehicleContent() {
                       notes
                     });
                     
-                    alert(t("cart.add_success") || "Added to your cart successfully.");
+                    // NEW: INSTANT CART OPEN! (No ugly alert popups)
+                    import('@/contexts/CartContext').then(({ useCart }) => {
+                       // Handled by context natively now
+                    });
                     
                     // Reset the form so they can add another tire
                     setStep(1);
@@ -276,7 +279,10 @@ function OrderVehicleContent() {
                     setTireQty("");
                     setSelectedOem("");
                     setNotes("");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    
+                    // Fire global event to open the Navbar Cart
+                    const event = new Event('open-cart-drawer');
+                    window.dispatchEvent(event);
                   }} 
                   disabled={!tireQty} 
                   className={`w-full bg-white text-obsidian px-6 py-5 rounded-2xl uppercase tracking-widest text-sm font-bold hover:bg-crimson hover:text-white transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed ${lang === 'ar' ? 'font-cairo font-bold' : ''}`}
