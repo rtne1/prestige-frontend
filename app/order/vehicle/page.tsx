@@ -47,32 +47,27 @@ function OrderVehicleContent() {
   const { t, lang } = useLanguage();
   const { addToCart } = useCart(); 
 
-  // Core States
   const [tire, setTire] = useState<Tire | null>(null);
   const [tab, setTab] = useState<"search" | "manual">("search");
   const [step, setStep] = useState<1 | 2 | 3>(1); 
   
-  // Search States
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<VehicleResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Manual Selection States (EXACTLY LIKE YOUR ORIGINAL)
   const [brands, setBrands] = useState<any[]>([]);
   const [models, setModels] = useState<any[]>([]);
   const [years, setYears] = useState<any[]>([]);
   const [selBrand, setSelBrand] = useState<number | null>(null);
   const [selModel, setSelModel] = useState<number | null>(null);
 
-  // Order Details States
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleResult | null>(null);
   const [tireQty, setTireQty] = useState<string>("");
   const [selectedOem, setSelectedOem] = useState<string>(""); 
   const [notes, setNotes] = useState("");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  // Configuration Options
   const qtyOptions = [
     { id: "all", label: t("configurator.qty_all") || "All 4 Tires" },
     { id: "front_2", label: t("configurator.qty_front_2") || "2 Front" },
@@ -92,17 +87,12 @@ function OrderVehicleContent() {
     { id: "LR", label: "LR (Land Rover)", desc: "Range Rover Approved" },
   ];
 
-  // Fetch initial data (YOUR ORIGINAL LOGIC)
   useEffect(() => {
     if (!tireId) { router.push("/"); return; }
-    
     api.get(`/compounds/${tireId}`).then(res => setTire(res.data.data)).catch(() => router.push("/"));
-    
-    // EXACTLY as you had it
     api.get("/vehicles/brands").then(res => setBrands(res.data.data));
   }, [tireId, router]);
 
-  // Smart Search Trigger
   useEffect(() => {
     if (tab !== "search") return;
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
@@ -116,15 +106,18 @@ function OrderVehicleContent() {
     }, 400);
   }, [searchQuery, tab]);
 
-  // Dropdown Handlers (YOUR ORIGINAL LOGIC)
+  // THE FIX: Prevent ID 0 crashes in dropdowns
   const handleBrandChange = (id: number) => {
+    if (!id) return;
     setSelBrand(id); setSelModel(null); setYears([]); setSelectedVehicle(null);
     api.get(`/vehicles/brands/${id}/models`).then(res => setModels(res.data.data));
   };
   
   const handleModelChange = (id: number) => {
+    if (!id) return;
     setSelModel(id); setSelectedVehicle(null);
-    const brandName = brands.find(b => b.id === id)?.name || "";
+    // THE FIX: Correctly extract the brand name so it displays accurately later
+    const brandName = brands.find(b => b.id === selBrand)?.name || "";
     api.get(`/vehicles/models/${id}/years`).then(res => {
       const mappedYears = res.data.data.map((y: any) => ({
         ...y, model: { name: models.find(m => m.id === id)?.name, brand: { name: brandName } }
@@ -155,12 +148,11 @@ function OrderVehicleContent() {
             notes
         });
         
-        setStep(3); // Success Step
+        setStep(3); 
         setIsAddingToCart(false);
         
         setTimeout(() => {
             window.dispatchEvent(new Event('open-cart-drawer'));
-            // Reset for next potential order
             setStep(1); setSelectedVehicle(null); setTireQty(""); setSelectedOem(""); setNotes("");
         }, 1500);
     }, 800);
@@ -173,15 +165,12 @@ function OrderVehicleContent() {
 
   return (
     <div className="min-h-screen bg-obsidian text-white pt-[100px] pb-32 relative overflow-hidden selection:bg-crimson selection:text-white">
-      {/* Background Ambience */}
       <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-crimson/5 blur-[150px] rounded-full pointer-events-none z-0"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-carbon/50 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
       <div className="max-w-[1400px] mx-auto w-full px-6 md:px-12 grid grid-cols-1 lg:grid-cols-[400px_1fr] xl:grid-cols-[450px_1fr] gap-8 lg:gap-16 relative z-10 items-start">
         
-        {/* ======================= */}
-        {/* LEFT COLUMN: DOSSIER    */}
-        {/* ======================= */}
+        {/* LEFT COLUMN: DOSSIER */}
         <div className="bg-gradient-to-b from-carbon/80 to-obsidian/90 backdrop-blur-3xl border border-white/10 p-8 lg:p-10 rounded-[2rem] lg:sticky lg:top-32 flex flex-col shadow-[0_30px_60px_rgba(0,0,0,0.8)] overflow-hidden relative group">
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           
@@ -227,12 +216,9 @@ function OrderVehicleContent() {
           </div>
         </div>
 
-        {/* ======================= */}
-        {/* RIGHT COLUMN: WORKFLOW  */}
-        {/* ======================= */}
+        {/* RIGHT COLUMN: WORKFLOW */}
         <div className="space-y-6 text-start flex flex-col">
           
-          {/* STEPPER PROGRESS */}
           <div className="flex items-center justify-between mb-4 px-2">
             {[1, 2].map((num) => (
                 <div key={num} className={`flex flex-col gap-2 w-1/2 ${num === 2 ? (lang === 'ar' ? 'items-end' : 'items-end') : (lang === 'ar' ? 'items-start' : 'items-start')}`}>
@@ -256,13 +242,11 @@ function OrderVehicleContent() {
 
             {step === 1 && (
               <div className="animate-[fadeInUp_0.4s_ease-out]">
-                {/* Search/Manual Toggle */}
                 <div className="flex p-1.5 bg-black/40 rounded-2xl mb-8 border border-white/5">
                   <button onClick={() => {setTab("search"); setSearchQuery("");}} className={`flex-1 py-3.5 text-[10px] md:text-xs uppercase tracking-widest rounded-xl transition-all duration-300 ${lang === 'ar' ? 'font-cairo font-bold' : ''} ${tab === "search" ? 'bg-white/10 text-white shadow-md border border-white/10' : 'text-ash hover:text-white hover:bg-white/5'}`}>{t("order.smart_search") || "Smart Search"}</button>
                   <button onClick={() => setTab("manual")} className={`flex-1 py-3.5 text-[10px] md:text-xs uppercase tracking-widest rounded-xl transition-all duration-300 ${lang === 'ar' ? 'font-cairo font-bold' : ''} ${tab === "manual" ? 'bg-white/10 text-white shadow-md border border-white/10' : 'text-ash hover:text-white hover:bg-white/5'}`}>{t("order.manual_select") || "Manual Selection"}</button>
                 </div>
 
-                {/* SMART SEARCH */}
                 {tab === "search" && (
                   <div className="relative">
                     <div className="relative flex items-center">
@@ -292,34 +276,31 @@ function OrderVehicleContent() {
                   </div>
                 )}
 
-                {/* MANUAL SELECTION - EXACTLY AS ORIGINAL */}
+                {/* THE FIX: Solid background colors inside the <option> tags so they are perfectly readable on Chrome/Windows */}
                 {tab === "manual" && (
                   <div className="space-y-4">
-                    {/* Brand Select */}
                     <div className="relative">
-                        <select onChange={(e) => handleBrandChange(Number(e.target.value))} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                            <option value="">{t("order.select_brand") || "Select Premium Brand"}</option>
-                            {brands.map(b => <option key={b.id} value={b.id}>{translateDB(b.name, lang)}</option>)}
+                        <select onChange={(e) => handleBrandChange(Number(e.target.value))} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors relative z-10 ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                            <option value="" className="bg-obsidian text-white">{t("order.select_brand") || "Select Premium Brand"}</option>
+                            {brands.map(b => <option key={b.id} value={b.id} className="bg-obsidian text-white">{translateDB(b.name, lang)}</option>)}
                         </select>
-                        <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} pointer-events-none`}>
+                        <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} pointer-events-none z-0`}>
                             <svg className="w-4 h-4 text-ash" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
 
-                    {/* Model Select */}
                     {selBrand && (
                       <div className="relative animate-[fadeIn_0.3s_ease-out]">
-                        <select onChange={(e) => handleModelChange(Number(e.target.value))} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors ${lang === 'ar' ? 'font-cairo' : ''}`}>
-                            <option value="">{t("order.select_model") || "Select Model"}</option>
-                            {models.map(m => <option key={m.id} value={m.id}>{translateDB(m.name, lang)}</option>)}
+                        <select onChange={(e) => handleModelChange(Number(e.target.value))} className={`w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-sm text-white outline-none focus:border-crimson appearance-none cursor-pointer transition-colors relative z-10 ${lang === 'ar' ? 'font-cairo' : ''}`}>
+                            <option value="" className="bg-obsidian text-white">{t("order.select_model") || "Select Model"}</option>
+                            {models.map(m => <option key={m.id} value={m.id} className="bg-obsidian text-white">{translateDB(m.name, lang)}</option>)}
                         </select>
-                        <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} pointer-events-none`}>
+                        <div className={`absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} pointer-events-none z-0`}>
                             <svg className="w-4 h-4 text-ash" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                         </div>
                       </div>
                     )}
 
-                    {/* Year Select */}
                     {selModel && years.length > 0 && (
                       <div className="pt-4 animate-[fadeInUp_0.4s_ease-out]">
                         <span className={`text-[10px] uppercase tracking-widest text-ash mb-4 block px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>Select Production Year</span>
@@ -350,7 +331,6 @@ function OrderVehicleContent() {
             {step === 2 && selectedVehicle && (
               <div className="animate-[fadeInUp_0.5s_ease-out]">
                 
-                {/* Selected Vehicle Badge */}
                 <div className="flex items-center justify-between bg-crimson/10 border border-crimson/30 rounded-2xl p-4 mb-8">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-black/50 rounded-xl flex items-center justify-center">
@@ -365,7 +345,6 @@ function OrderVehicleContent() {
                     </div>
                 </div>
 
-                {/* OEM Specifications Display */}
                 {selectedVehicle.oemSpec && (
                   <div className="bg-gradient-to-br from-black/80 to-carbon border border-white/10 rounded-2xl p-6 md:p-8 mb-10 shadow-inner flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group hover:border-white/20 transition-colors">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-crimson/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -385,7 +364,6 @@ function OrderVehicleContent() {
                   </div>
                 )}
 
-                {/* OEM Mark Selection */}
                 <h3 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>Required Homologation (Optional)</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
                   {oemOptions.map(opt => (
@@ -396,7 +374,6 @@ function OrderVehicleContent() {
                   ))}
                 </div>
 
-                {/* Quantity Selection */}
                 <h3 className={`text-[10px] uppercase tracking-widest text-ash mb-4 px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("configurator.qty_title") || "Select Quantity"}</h3>
                 <div className="flex flex-wrap gap-3 mb-10">
                   {qtyOptions.map(opt => (
@@ -406,7 +383,6 @@ function OrderVehicleContent() {
                   ))}
                 </div>
 
-                {/* Notes */}
                 <div className="mb-10 relative">
                   <label className={`text-[10px] uppercase tracking-widest text-ash mb-3 block px-2 ${lang === 'ar' ? 'font-cairo' : ''}`}>{t("order.special_notes") || "Additional Instructions"}</label>
                   <textarea 
@@ -417,7 +393,6 @@ function OrderVehicleContent() {
                   />
                 </div>
 
-                {/* Submit Action */}
                 <button 
                   onClick={handleAddToCart} 
                   disabled={!tireQty || isAddingToCart} 
